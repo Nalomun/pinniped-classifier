@@ -1,0 +1,415 @@
+{
+  "n_images": 12,
+  "classes": [
+    "true_seal",
+    "eared_seal",
+    "walrus",
+    "not_pinniped"
+  ],
+  "max_abs_prob_diff": {
+    "onnx_fp32": 4.3213367462158203e-07
+  },
+  "argmax_agreement": {
+    "onnx_fp32": true
+  },
+  "fp32_parity_pass": true,
+  "atol": 0.001,
+  "images": [
+    {
+      "file": "eared_seal_102544.jpg",
+      "true_class": "eared_seal",
+      "species": "Arctocephalus gazella",
+      "attribution": "(c) Brian Gratwicke, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/67508",
+      "input_tensor_stats": {
+        "mean": 0.4142964780330658,
+        "std": 0.22094066441059113,
+        "first5": [
+          0.2235294133424759,
+          0.2235294133424759,
+          0.2235294133424759,
+          0.22745098173618317,
+          0.22745098173618317
+        ]
+      },
+      "torch": [
+        0.013344000093638897,
+        0.9520760178565979,
+        0.021124999970197678,
+        0.013454999774694443
+      ],
+      "onnx_fp32": [
+        0.01334299985319376,
+        0.9520760178565979,
+        0.021124999970197678,
+        0.013454999774694443
+      ],
+      "onnx_fp32_max_abs_diff": 5.681067705154419e-08,
+      "onnx_fp32_argmax_match": true,
+      "pred": "eared_seal"
+    },
+    {
+      "file": "true_seal_144793.jpg",
+      "true_class": "true_seal",
+      "species": "Phoca vitulina",
+      "attribution": "(c) Marie Cerda, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/99991",
+      "input_tensor_stats": {
+        "mean": 0.6679362058639526,
+        "std": 0.27339598536491394,
+        "first5": [
+          0.8196078538894653,
+          0.8196078538894653,
+          0.8117647171020508,
+          0.8235294222831726,
+          0.8274509906768799
+        ]
+      },
+      "torch": [
+        0.12791700661182404,
+        0.7743780016899109,
+        0.03420199826359749,
+        0.06350299715995789
+      ],
+      "onnx_fp32": [
+        0.12791700661182404,
+        0.7743780016899109,
+        0.03420199826359749,
+        0.06350299715995789
+      ],
+      "onnx_fp32_max_abs_diff": 4.3213367462158203e-07,
+      "onnx_fp32_argmax_match": true,
+      "pred": "eared_seal"
+    },
+    {
+      "file": "eared_seal_259862.jpg",
+      "true_class": "eared_seal",
+      "species": "Arctocephalus galapagoensis",
+      "attribution": "(c) Brian Gratwicke, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/204774",
+      "input_tensor_stats": {
+        "mean": 0.32706403732299805,
+        "std": 0.1589597761631012,
+        "first5": [
+          0.529411792755127,
+          0.5333333611488342,
+          0.5333333611488342,
+          0.5333333611488342,
+          0.5411764979362488
+        ]
+      },
+      "torch": [
+        0.012795999646186829,
+        0.9476760029792786,
+        0.01860800012946129,
+        0.020919999107718468
+      ],
+      "onnx_fp32": [
+        0.012795999646186829,
+        0.9476760029792786,
+        0.01860800012946129,
+        0.020919999107718468
+      ],
+      "onnx_fp32_max_abs_diff": 1.1920928955078125e-07,
+      "onnx_fp32_argmax_match": true,
+      "pred": "eared_seal"
+    },
+    {
+      "file": "eared_seal_520433.jpg",
+      "true_class": "eared_seal",
+      "species": "Callorhinus ursinus",
+      "attribution": "(c) Ken-ichi Ueda, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/413480",
+      "input_tensor_stats": {
+        "mean": 0.6014359593391418,
+        "std": 0.13751757144927979,
+        "first5": [
+          0.6941176652908325,
+          0.6901960968971252,
+          0.6745098233222961,
+          0.6784313917160034,
+          0.6784313917160034
+        ]
+      },
+      "torch": [
+        0.12744399905204773,
+        0.8102740049362183,
+        0.02102000080049038,
+        0.04126200079917908
+      ],
+      "onnx_fp32": [
+        0.12744499742984772,
+        0.8102740049362183,
+        0.021019000560045242,
+        0.04126200079917908
+      ],
+      "onnx_fp32_max_abs_diff": 2.086162567138672e-07,
+      "onnx_fp32_argmax_match": true,
+      "pred": "eared_seal"
+    },
+    {
+      "file": "not_pinniped_1487857.jpg",
+      "true_class": "not_pinniped",
+      "species": "Castor canadensis",
+      "attribution": "(c) Annika Lindqvist, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/1178698",
+      "input_tensor_stats": {
+        "mean": 0.3572132885456085,
+        "std": 0.11229180544614792,
+        "first5": [
+          0.3803921639919281,
+          0.4117647111415863,
+          0.42352941632270813,
+          0.4156862795352936,
+          0.40784314274787903
+        ]
+      },
+      "torch": [
+        0.016535000875592232,
+        0.014809000305831432,
+        0.013205000199377537,
+        0.955452024936676
+      ],
+      "onnx_fp32": [
+        0.016535000875592232,
+        0.014809000305831432,
+        0.013205000199377537,
+        0.955452024936676
+      ],
+      "onnx_fp32_max_abs_diff": 7.450580596923828e-09,
+      "onnx_fp32_argmax_match": true,
+      "pred": "not_pinniped"
+    },
+    {
+      "file": "not_pinniped_1706721.jpg",
+      "true_class": "not_pinniped",
+      "species": "Cephalorhynchus hectori",
+      "attribution": "(c) Joe Potter Butler, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/1381109",
+      "input_tensor_stats": {
+        "mean": 0.3694663941860199,
+        "std": 0.1308918595314026,
+        "first5": [
+          0.24705882370471954,
+          0.23529411852359772,
+          0.22745098173618317,
+          0.21960784494876862,
+          0.21176470816135406
+        ]
+      },
+      "torch": [
+        0.038460999727249146,
+        0.048232000321149826,
+        0.03514000028371811,
+        0.8781669735908508
+      ],
+      "onnx_fp32": [
+        0.038460999727249146,
+        0.048232000321149826,
+        0.03514000028371811,
+        0.8781669735908508
+      ],
+      "onnx_fp32_max_abs_diff": 1.1920928955078125e-07,
+      "onnx_fp32_argmax_match": true,
+      "pred": "not_pinniped"
+    },
+    {
+      "file": "walrus_2123671.jpg",
+      "true_class": "walrus",
+      "species": "Odobenus rosmarus rosmarus",
+      "attribution": "(c) Paul Prior, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/1749960",
+      "input_tensor_stats": {
+        "mean": 0.546691358089447,
+        "std": 0.1832798719406128,
+        "first5": [
+          0.6784313917160034,
+          0.6784313917160034,
+          0.6784313917160034,
+          0.6784313917160034,
+          0.6784313917160034
+        ]
+      },
+      "torch": [
+        0.3131769895553589,
+        0.17207099497318268,
+        0.05993900075554848,
+        0.45481300354003906
+      ],
+      "onnx_fp32": [
+        0.3131769895553589,
+        0.17207099497318268,
+        0.05993900075554848,
+        0.45481300354003906
+      ],
+      "onnx_fp32_max_abs_diff": 2.384185791015625e-07,
+      "onnx_fp32_argmax_match": true,
+      "pred": "not_pinniped"
+    },
+    {
+      "file": "walrus_2123680.jpg",
+      "true_class": "walrus",
+      "species": "Odobenus rosmarus rosmarus",
+      "attribution": "(c) Paul Prior, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/1749960",
+      "input_tensor_stats": {
+        "mean": 0.33625292778015137,
+        "std": 0.13879086077213287,
+        "first5": [
+          0.45098039507865906,
+          0.5137255191802979,
+          0.501960813999176,
+          0.47058823704719543,
+          0.4627451002597809
+        ]
+      },
+      "torch": [
+        0.18626199662685394,
+        0.023326000198721886,
+        0.7615579962730408,
+        0.02885499969124794
+      ],
+      "onnx_fp32": [
+        0.18626199662685394,
+        0.023326000198721886,
+        0.7615569829940796,
+        0.02885499969124794
+      ],
+      "onnx_fp32_max_abs_diff": 1.1920928955078125e-07,
+      "onnx_fp32_argmax_match": true,
+      "pred": "walrus"
+    },
+    {
+      "file": "true_seal_2300928.jpg",
+      "true_class": "true_seal",
+      "species": "Mirounga leonina",
+      "attribution": "(c) John Barkla, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/1887188",
+      "input_tensor_stats": {
+        "mean": 0.38965556025505066,
+        "std": 0.19631296396255493,
+        "first5": [
+          0.45098039507865906,
+          0.5137255191802979,
+          0.6392157077789307,
+          0.7333333492279053,
+          0.7529411911964417
+        ]
+      },
+      "torch": [
+        0.9598090052604675,
+        0.009566999971866608,
+        0.01523400004953146,
+        0.015390000306069851
+      ],
+      "onnx_fp32": [
+        0.9598090052604675,
+        0.009566999971866608,
+        0.01523400004953146,
+        0.015390000306069851
+      ],
+      "onnx_fp32_max_abs_diff": 4.284083843231201e-08,
+      "onnx_fp32_argmax_match": true,
+      "pred": "true_seal"
+    },
+    {
+      "file": "true_seal_2739494.jpg",
+      "true_class": "true_seal",
+      "species": "Mirounga leonina",
+      "attribution": "(c) Kim, Hyun-tae, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/2451983",
+      "input_tensor_stats": {
+        "mean": 0.44547325372695923,
+        "std": 0.1828366369009018,
+        "first5": [
+          0.5607843399047852,
+          0.5607843399047852,
+          0.5686274766921997,
+          0.572549045085907,
+          0.572549045085907
+        ]
+      },
+      "torch": [
+        0.9495819807052612,
+        0.011757999658584595,
+        0.022196000441908836,
+        0.016464000567793846
+      ],
+      "onnx_fp32": [
+        0.9495819807052612,
+        0.011757999658584595,
+        0.022196000441908836,
+        0.016464000567793846
+      ],
+      "onnx_fp32_max_abs_diff": 2.421438694000244e-08,
+      "onnx_fp32_argmax_match": true,
+      "pred": "true_seal"
+    },
+    {
+      "file": "not_pinniped_3166761.jpg",
+      "true_class": "not_pinniped",
+      "species": "Trichechus manatus latirostris",
+      "attribution": "(c) Chelle Temple-King, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/2790717",
+      "input_tensor_stats": {
+        "mean": 0.5363597869873047,
+        "std": 0.04993029683828354,
+        "first5": [
+          0.47843137383461,
+          0.48235294222831726,
+          0.4941176474094391,
+          0.5176470875740051,
+          0.5333333611488342
+        ]
+      },
+      "torch": [
+        0.029373999685049057,
+        0.007895000278949738,
+        0.015425000339746475,
+        0.9473059773445129
+      ],
+      "onnx_fp32": [
+        0.029373999685049057,
+        0.007895000278949738,
+        0.015425000339746475,
+        0.9473059773445129
+      ],
+      "onnx_fp32_max_abs_diff": 1.7881393432617188e-07,
+      "onnx_fp32_argmax_match": true,
+      "pred": "not_pinniped"
+    },
+    {
+      "file": "walrus_11508560.jpg",
+      "true_class": "walrus",
+      "species": "Odobenus rosmarus rosmarus",
+      "attribution": "(c) patrickc, some rights reserved (CC BY)",
+      "observation_url": "https://www.inaturalist.org/observations/8606350",
+      "input_tensor_stats": {
+        "mean": 0.4573161005973816,
+        "std": 0.21495042741298676,
+        "first5": [
+          0.7411764860153198,
+          0.7450980544090271,
+          0.7411764860153198,
+          0.7450980544090271,
+          0.7450980544090271
+        ]
+      },
+      "torch": [
+        0.045389000326395035,
+        0.04873000085353851,
+        0.8732519745826721,
+        0.032628998160362244
+      ],
+      "onnx_fp32": [
+        0.045389000326395035,
+        0.04873000085353851,
+        0.8732519745826721,
+        0.032628998160362244
+      ],
+      "onnx_fp32_max_abs_diff": 5.960464477539063e-08,
+      "onnx_fp32_argmax_match": true,
+      "pred": "walrus"
+    }
+  ]
+}

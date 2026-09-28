@@ -146,8 +146,14 @@ def main():
         val_scores = {}
         for method in ["percentile", "entropy", "minmax"]:
             cand = int8_path.with_name(f"pinniped_int8_{method}.onnx")
-            quantize(fp32_path, cand, calib_df, mean, std, img_size, method)
-            vm = compute_metrics(onnx_probs(cand, val_df, mean, std, img_size), val_df)
+            try:
+                quantize(fp32_path, cand, calib_df, mean, std, img_size, method)
+                vm = compute_metrics(onnx_probs(cand, val_df, mean, std, img_size), val_df)
+            except Exception as e:  # noqa: BLE001  (ORT calibrators occasionally crash on some graphs)
+                print(f"[quant:{method}] FAILED: {type(e).__name__}: {str(e)[:120]}")
+                cand.unlink(missing_ok=True)
+                fp32_path.with_suffix(".pre.onnx").unlink(missing_ok=True)
+                continue
             val_scores[method] = vm["pinniped_acc_strict"]
             print(f"[quant:{method}] val pinniped acc={vm['pinniped_acc_strict']:.4f} acc={vm['accuracy_4way']:.4f}")
         best_method = max(val_scores, key=val_scores.get)

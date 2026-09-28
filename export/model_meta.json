@@ -1,0 +1,138 @@
+{
+  "name": "Seal or Sea Lion? pinniped classifier",
+  "version": "2026-09-28",
+  "architecture": "mobilenetv3_large_100",
+  "pretrained_tag": "mobilenetv3_large_100.miil_in21k_ft_in1k",
+  "onnx_opset": 17,
+  "recommended_file": "pinniped.onnx",
+  "files": {
+    "fp32": {
+      "file": "pinniped.onnx",
+      "size_mb": 16.82,
+      "sha256": "a9f32cdbb40be519b558938eeec3a891b395f609638ccf2f1ba1b6b820605f32",
+      "test_accuracy_4way": 0.8982536066818527,
+      "test_pinniped_acc_strict": 0.8849449204406364,
+      "test_fur_seal_acc": 0.9132947976878613
+    },
+    "int8": {
+      "file": null,
+      "size_mb": 4.7,
+      "sha256": "7eadeeee30cd2056b223ee91b5ca62a66c8867d58766e75470b1eb5336ba9eef",
+      "test_accuracy_4way": 0.744874715261959,
+      "test_pinniped_acc_strict": 0.6266829865361077,
+      "test_fur_seal_acc": 0.4277456647398844,
+      "drop_accuracy_points": 15.338,
+      "drop_pinniped_points": 25.826,
+      "kept": false,
+      "calibration": "minmax",
+      "val_pinniped_acc_by_calibration": {
+        "minmax": 0.6133651551312649
+      }
+    }
+  },
+  "classes": [
+    "true_seal",
+    "eared_seal",
+    "walrus",
+    "not_pinniped"
+  ],
+  "pinniped_classes": [
+    "true_seal",
+    "eared_seal",
+    "walrus"
+  ],
+  "class_descriptions": {
+    "true_seal": "Phocidae (earless/true seals)",
+    "eared_seal": "Otariidae (sea lions and fur seals)",
+    "walrus": "Odobenidae",
+    "not_pinniped": "anything else"
+  },
+  "input": {
+    "name": "input",
+    "shape": [
+      1,
+      3,
+      288,
+      288
+    ],
+    "dtype": "float32",
+    "layout": "NCHW",
+    "color_space": "RGB"
+  },
+  "output": {
+    "name": "logits",
+    "shape": [
+      1,
+      4
+    ],
+    "note": "raw logits; apply softmax to get probabilities"
+  },
+  "preprocessing": {
+    "color_space": "RGB",
+    "steps": [
+      {
+        "op": "resize_shorter_side",
+        "size": 329,
+        "interpolation": "bilinear"
+      },
+      {
+        "op": "center_crop",
+        "size": 288
+      },
+      {
+        "op": "to_float",
+        "scale": "divide_by_255"
+      },
+      {
+        "op": "normalize",
+        "mean": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "std": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "op": "layout",
+        "value": "NCHW"
+      }
+    ]
+  },
+  "resize_shorter_side": 329,
+  "crop_size": 288,
+  "mean": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "std": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "threshold": 0.85,
+  "decision_rule": "argmax over the 4 probabilities. If the argmax is a pinniped class and its probability is below `threshold`, show the 'unsure' response instead. If the argmax is not_pinniped, show the not-a-seal response.",
+  "metrics_test": {
+    "accuracy_4way": 0.8982536066818527,
+    "pinniped_acc_strict": 0.8849449204406364,
+    "pinniped_acc_3way": 0.9106487148102815,
+    "fur_seal_acc": 0.9132947976878613,
+    "not_pinniped_precision": 0.9349593495934959,
+    "not_pinniped_recall": 0.92
+  },
+  "training_data": {
+    "source": "iNaturalist research-grade observations, CC0 / CC-BY photos only",
+    "n_images": 8803,
+    "per_class": {
+      "not_pinniped": 3326,
+      "true_seal": 2706,
+      "eared_seal": 2532,
+      "walrus": 239
+    },
+    "attribution": "see data/manifest.csv"
+  }
+}
