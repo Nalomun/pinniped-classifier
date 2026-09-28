@@ -6,8 +6,8 @@ those. It runs entirely in the browser: the photo never leaves your device.
 
 **Live page:** <https://quinnlambert.com/seal> · **Training code:** this repo
 
-**Result:** 88.5 % pinniped test accuracy (fur seals 91.3 %), 92.9 % on the photos it is
-confident about, from a 16.8 MB ONNX model. The 95 % target was not reached; see
+**Result:** 89.7 % pinniped test accuracy (fur seals 92.5 %), 93.5 % on the photos it is
+confident about, from a 5 MB ONNX model. The 95 % target was not reached; see
 [Results](#results) and [Limitations](#known-limitations-and-failure-examples).
 
 ## Why three families instead of "seal vs sea lion"
@@ -130,59 +130,67 @@ enormously across iNat photos. Model selection is by validation **pinniped** acc
 that's the ship bar. 288 px instead of 224 px was worth +2.2 points of pinniped test accuracy
 (86.3 % → 88.5 %): the residual errors are small, distant animals, so pixels matter.
 
+**Inference runs at 352 px, above the 288 px training size, on purpose.** Random-resized-crop
+training shows the network objects larger than a centre crop does at test time (the "FixRes"
+effect), so testing somewhat above the training resolution helps: 352 px gave +1.2 points
+(88.5 % → 89.7 %) for 1.5× the compute and no retraining; 384 and 416 were already past the
+sweet spot. The threshold was re-tuned at 352.
+
 Preprocessing at inference (also written into `export/model_meta.json` for the browser):
-resize the shorter side to 329 (bilinear) → centre-crop 288 → scale to [0,1] → normalise
+resize the shorter side to 402 (bilinear) → centre-crop 352 → scale to [0,1] → normalise
 with the checkpoint's mean/std (0 / 1 for these weights) → NCHW, RGB.
 
 ## Results
 
-**The ship bar was ≥ 95 % test accuracy on the three pinniped classes. The result is 88.5 %.
+**The ship bar was ≥ 95 % test accuracy on the three pinniped classes. The result is 89.7 %.
 The bar was not met**, and the numbers below are reported as they are. The [Limitations](#known-limitations-and-failure-examples)
 section explains where the remaining errors come from and what would move the number.
 
 Test set: 1 317 photos from 1 107 observations never seen in training. Best epoch 11 of 12
-(validation pinniped accuracy 90.3 %).
+(validation pinniped accuracy 90.3 % at the 288 px training size), evaluated at 352 px.
 
 | Metric (test) | Value |
 |---|---|
-| Pinniped accuracy, strict (4-way argmax on the 817 pinniped photos) | **88.5 %** |
-| Pinniped accuracy, 3-way (argmax over the three pinniped classes only) | 91.1 % |
-| Overall 4-way accuracy | 89.8 % |
-| **Fur seal subgroup**: fur-seal photos called `eared_seal` (n = 173) | **91.3 %** |
-| Sea lion subgroup: sea-lion photos called `eared_seal` (n = 200) | 88.0 % |
-| `not_pinniped` precision / recall | 93.5 % / 92.0 % |
-| `not_pinniped` recall on lookalikes / other animals / non-animals | 87.9 % / 99.2 % / 100 % |
+| Pinniped accuracy, strict (4-way argmax on the 817 pinniped photos) | **89.7 %** |
+| Pinniped accuracy, 3-way (argmax over the three pinniped classes only) | 91.4 % |
+| Overall 4-way accuracy | 90.9 % |
+| **Fur seal subgroup**: fur-seal photos called `eared_seal` (n = 173) | **92.5 %** |
+| Sea lion subgroup: sea-lion photos called `eared_seal` (n = 200) | 91.0 % |
+| `not_pinniped` precision / recall | 94.7 % / 92.8 % |
+| `not_pinniped` recall on lookalikes / other animals / non-animals | 89.1 % / 99.2 % / 100 % |
 
 Per class:
 
 | Class | Precision | Recall | F1 | n |
 |---|---|---|---|---|
-| `true_seal` | 0.874 | 0.897 | 0.885 | 408 |
-| `eared_seal` | 0.879 | 0.895 | 0.887 | 373 |
-| `walrus` | 0.885 | 0.639 | 0.742 | 36 |
-| `not_pinniped` | 0.935 | 0.920 | 0.927 | 500 |
+| `true_seal` | 0.881 | 0.907 | 0.894 | 408 |
+| `eared_seal` | 0.893 | 0.917 | 0.905 | 373 |
+| `walrus` | 0.875 | 0.583 | 0.700 | 36 |
+| `not_pinniped` | 0.947 | 0.928 | 0.937 | 500 |
 
 ![confusion matrix](reports/confusion_matrix.png)
 
-Fur seals, the case the app exists for, are the *best* subgroup of Otariidae (91.3 %), so the
+Fur seals, the case the app exists for, are the *best* subgroup of Otariidae (92.5 %), so the
 "your seal is on team sea lion" correction is on solid ground. Walrus is the weak class: with
-only 36 test photos, 13 misses is 64 % recall, and most misses go to `true_seal` (a
-tuskless walrus lying on a beach is a big brown blob).
+only 36 test photos, 15 misses is 58 % recall, and most misses go to `true_seal` (a
+tuskless walrus lying on a beach is a big brown blob). Walrus is also the one class that got
+*worse* going from 288 to 352 px (64 % → 58 %, i.e. two photos), which is within the noise of
+a 36-photo class.
 
 ### Accuracy depends on how visible the animal is
 
 The CLIP visibility score from the filter step is a good proxy for "is this a photo a person
 would actually upload". Pinniped test accuracy by score band:
 
-| CLIP visibility score | n | Pinniped accuracy |
+| CLIP visibility score | n | Pinniped accuracy (288 px model) |
 |---|---|---|
 | 0.9999 – 1 (portrait-like, animal fills the frame) | 353 | **93.5 %** |
 | 0.999 – 0.9999 | 232 | 91.8 % |
 | 0.99 – 0.999 | 145 | 85.5 % |
 | 0.95 – 0.99 (barely passed the filter) | 87 | 64.4 % |
 
-Even on the clearest photos the model is at 93.5 %, not 95 %; the honest reading is that a
-4M-parameter model at 288 px tops out a little below the bar on this data.
+Even on the clearest photos the model is around 93–94 %, not 95 %; the honest reading is that
+a 4M-parameter model tops out a little below the bar on this data.
 
 ### The "unsure" threshold
 
@@ -193,31 +201,44 @@ was chosen on the validation set to maximise (fraction of wrong pinniped answers
 (fraction of right pinniped answers flagged), i.e. Youden's J (`reports/threshold_sweep.csv`).
 On the test set it:
 
-* flags 24.6 % of pinniped photos as unsure (coverage 75.4 %),
-* raises accuracy on the pinniped photos it does answer from 88.5 % to **92.9 %**
-  (errors 94 → 44),
-* cuts non-pinnipeds confidently called a pinniped from 40 to 9 (of 500).
+* flags 26.2 % of pinniped photos as unsure (coverage 73.8 %),
+* raises accuracy on the pinniped photos it does answer from 89.7 % to **93.5 %**
+  (errors 84 → 39),
+* cuts non-pinnipeds confidently called a pinniped from 36 to 8 (of 500).
+
+Raising the threshold further does not help: above ~0.85 the confidently *wrong* answers
+survive while moderately confident right ones get flagged, so accuracy-on-answered falls.
+Flip test-time augmentation (+0.1) and ensembling the 224 and 288 px models (+0.1) were also
+measured and are not worth their 2× cost.
 
 ### Export
 
 | File | Size | Test accuracy (4-way) | Pinniped accuracy | Shipped? |
 |---|---|---|---|---|
-| `export/pinniped.onnx` (fp32, opset 17) | 16.8 MB | 89.8 % | 88.5 % | **yes** |
-| int8 static quantization (QDQ, per-channel) | 4.7 MB | 74.5 % | 62.7 % | no (−25.8 points) |
+| `export/pinniped_w8.onnx` (int8 weights, fp32 compute, opset 17) | **5.0 MB** | 90.9 % | 89.7 % | **yes** |
+| `export/pinniped.onnx` (fp32 reference) | 16.8 MB | 90.9 % | 89.7 % | kept as the reference |
+| int8 static quantization (QDQ, weights + activations) | 4.7 MB | 74.5 % | 62.7 % | no (−25.8 points) |
 
-The int8 model was discarded per the < 0.5-point rule. MobileNetV3's hardswish and
-squeeze-excite blocks produce activation outliers that MinMax calibration cannot handle, and
-the percentile / entropy calibrators that would fix that crash in onnxruntime 1.30 with numpy 2
-(`ValueError: inhomogeneous shape` inside the histogram collector). fp32 is under the 20 MB
-budget anyway. `scripts/export.py` still tries all three calibrators and keeps the best on
-validation, so this can be revisited with a newer onnxruntime.
+Two kinds of int8 were tried and they are not the same thing:
 
-`export/model_meta.json` carries the class order, input shape (1×3×288×288), preprocessing
+* **Static int8** (weights *and* activations) destroyed the model. MobileNetV3's hardswish and
+  squeeze-excite blocks produce activation outliers that MinMax calibration cannot handle,
+  and the percentile / entropy calibrators that would fix that crash in onnxruntime 1.30 with
+  numpy 2 (`ValueError: inhomogeneous shape` inside the histogram collector).
+* **Weight-only int8** keeps all compute in fp32 and just stores the conv weights as int8
+  with a per-channel `DequantizeLinear` in front of each one, so no calibration is needed and
+  the runtime dequantizes once at load. Naively that cost 1.5 points; keeping every tensor
+  under 20k elements in fp32 (first conv, squeeze-excite, early depthwise convs: 0.9 MB in
+  total) and picking each channel's scale by a small MSE search instead of max-abs brought
+  the drop to 0.0. That is the shipped file. It also means a backbone with ~4× the parameters
+  could still ship under 20 MB.
+
+`export/model_meta.json` carries the class order, input shape (1×3×352×352), preprocessing
 steps, mean/std and threshold; the page must implement exactly that spec.
 `scripts/parity.py` confirms PyTorch and ONNX Runtime agree on the 12 committed sample images
-in `reports/parity_samples/` (max |Δ probability| 4.3 × 10⁻⁷, identical argmax);
-`reports/parity.json` stores their per-image probabilities so the browser build can be checked
-against the same images.
+in `reports/parity_samples/` (max |Δ probability| ~10⁻⁶ for fp32, identical argmax; the int8-
+weight file's outputs are recorded separately); `reports/parity.json` stores their per-image
+probabilities so the browser build can be checked against the same images.
 
 ## Known limitations and failure examples
 
@@ -258,8 +279,8 @@ pip install -r requirements.txt
 python scripts/download.py --from-manifest   # ~8k photos, ~800 MB; exact committed dataset
 # python scripts/download.py && python scripts/filter.py && python scripts/split.py   # ...or draw a fresh sample
 python scripts/train.py                      # -> outputs/best.pt
-python scripts/eval.py                       # -> reports/metrics.json + figures, tunes threshold on val
-python scripts/export.py                     # -> export/pinniped.onnx (+ int8 if it survives), model_meta.json
+python scripts/eval.py --img-size 352        # -> reports/metrics.json + figures, tunes threshold on val (at the inference size)
+python scripts/export.py                     # -> export/pinniped.onnx, pinniped_w8.onnx (int8 weights), model_meta.json
 python scripts/parity.py                     # PyTorch vs ONNX Runtime on committed sample images
 python scripts/predict.py some_photo.jpg     # try it
 ```

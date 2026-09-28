@@ -1,28 +1,28 @@
 class,subgroup,query_taxon,n,acc
 eared_seal,sea_lion,Phocarctos hookeri,41,0.8292682926829268
-eared_seal,fur_seal,Callorhinus ursinus,20,0.85
-eared_seal,sea_lion,Eumetopias jubatus,40,0.85
+eared_seal,fur_seal,Arctocephalus australis,15,0.8666666666666667
+eared_seal,sea_lion,Eumetopias jubatus,40,0.875
 eared_seal,fur_seal,Arctocephalus gazella,33,0.8787878787878788
-eared_seal,sea_lion,Zalophus californianus,34,0.8823529411764706
-eared_seal,fur_seal,Arctocephalus pusillus,39,0.8974358974358975
+eared_seal,fur_seal,Callorhinus ursinus,20,0.9
 eared_seal,sea_lion,Zalophus wollebaeki,33,0.9090909090909091
-eared_seal,sea_lion,Neophoca cinerea,12,0.9166666666666666
 eared_seal,sea_lion,Otaria flavescens,40,0.925
-eared_seal,fur_seal,Arctocephalus australis,15,0.9333333333333333
 eared_seal,fur_seal,Arctocephalus forsteri,53,0.9433962264150944
+eared_seal,fur_seal,Arctocephalus pusillus,39,0.9487179487179487
 eared_seal,fur_seal,Arctocephalus galapagoensis,7,1.0
 eared_seal,fur_seal,Arctocephalus townsendi,4,1.0
 eared_seal,fur_seal,Arctocephalus tropicalis,2,1.0
-not_pinniped,lookalike,Lutrinae,50,0.74
-not_pinniped,lookalike,Hippopotamidae,16,0.75
+eared_seal,sea_lion,Neophoca cinerea,12,1.0
+eared_seal,sea_lion,Zalophus californianus,34,1.0
+not_pinniped,lookalike,Lutrinae,50,0.72
+not_pinniped,lookalike,Hippopotamidae,16,0.8125
 not_pinniped,lookalike,Mysticeti,24,0.8333333333333334
 not_pinniped,lookalike,Cheloniidae,25,0.84
-not_pinniped,lookalike,Sirenia,44,0.8636363636363636
+not_pinniped,lookalike,Sirenia,44,0.9090909090909091
 not_pinniped,lookalike,Spheniscidae,44,0.9318181818181818
-not_pinniped,lookalike,Delphinidae,46,0.9347826086956522
-not_pinniped,lookalike,Castor,17,0.9411764705882353
 not_pinniped,other_animal,Phalacrocoracidae,22,0.9545454545454546
+not_pinniped,lookalike,Delphinidae,46,0.9565217391304348
 not_pinniped,lookalike,Ursidae,31,0.967741935483871
+not_pinniped,lookalike,Castor,17,1.0
 not_pinniped,lookalike,Crocodylia,24,1.0
 not_pinniped,non_animal,Fungi,9,1.0
 not_pinniped,non_animal,Insecta,18,1.0
@@ -32,20 +32,20 @@ not_pinniped,other_animal,Canis familiaris,29,1.0
 not_pinniped,other_animal,Cervidae,23,1.0
 not_pinniped,other_animal,Felis catus,20,1.0
 not_pinniped,other_animal,Laridae,19,1.0
-true_seal,,Pagophilus groenlandicus,11,0.36363636363636365
+true_seal,,Pagophilus groenlandicus,11,0.2727272727272727
 true_seal,,Pusa saimensis,3,0.6666666666666666
 true_seal,,Erignathus barbatus,9,0.7777777777777778
 true_seal,,Phoca vitulina,32,0.8125
-true_seal,,Mirounga angustirostris,45,0.8666666666666667
-true_seal,,Mirounga leonina,60,0.9
+true_seal,,Mirounga angustirostris,45,0.8444444444444444
 true_seal,,Neomonachus schauinslandi,40,0.9
-true_seal,,Halichoerus grypus,41,0.9024390243902439
-true_seal,,Lobodon carcinophaga,36,0.9166666666666666
+true_seal,,Lobodon carcinophaga,36,0.9444444444444444
 true_seal,,Phoca largha,18,0.9444444444444444
+true_seal,,Mirounga leonina,60,0.95
+true_seal,,Halichoerus grypus,41,0.9512195121951219
 true_seal,,Hydrurga leptonyx,41,0.9512195121951219
 true_seal,,Cystophora cristata,1,1.0
 true_seal,,Histriophoca fasciata,2,1.0
 true_seal,,Leptonychotes weddellii,60,1.0
 true_seal,,Ommatophoca rossii,2,1.0
 true_seal,,Pusa hispida,7,1.0
-walrus,,Odobenus rosmarus,36,0.6388888888888888
+walrus,,Odobenus rosmarus,36,0.5833333333333334

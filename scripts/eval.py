@@ -222,6 +222,10 @@ def main():
     ap.add_argument("--checkpoint", default=str(OUTPUTS_DIR / "best.pt"))
     ap.add_argument("--device", default="auto")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--img-size", type=int, default=0,
+                    help="inference resolution; 0 = the checkpoint's training size. Testing somewhat ABOVE the training "
+                         "size helps (the 'FixRes' effect: random-resized-crop training shows objects larger than a "
+                         "centre crop does). For the 288px model, 352 gave +1.2 pts.")
     args = ap.parse_args()
 
     device = get_device(args.device)
@@ -230,7 +234,8 @@ def main():
     print(f"loaded {args.checkpoint} ({ck['model']}, best val epoch {ck.get('val')})")
 
     val_df, test_df = load_manifest("val"), load_manifest("test")
-    img_size = ck.get("img_size", 224)
+    img_size = args.img_size or ck.get("img_size", 224)
+    print(f"inference size {img_size} (trained at {ck.get('img_size', 224)})")
     val_probs = predict_probs(model, val_df, device, ck["mean"], ck["std"], img_size, workers=args.workers)
     test_probs = predict_probs(model, test_df, device, ck["mean"], ck["std"], img_size, workers=args.workers)
     np.savez(OUTPUTS_DIR / "probs.npz", val=val_probs, test=test_probs)
@@ -250,7 +255,8 @@ def main():
                    .agg(n="size", acc="mean").reset_index().sort_values(["class", "acc"]))
     per_species.to_csv(REPORTS_DIR / "per_species.csv", index=False)
 
-    metrics = {"model": ck["model"], "tag": ck["tag"], "img_size": img_size, "best_epoch": ck.get("val"), "threshold": threshold,
+    metrics = {"model": ck["model"], "tag": ck["tag"], "img_size": img_size, "train_img_size": ck.get("img_size", 224),
+               "best_epoch": ck.get("val"), "threshold": threshold,
                "val": val_m, "test": test_m, "worst_test_errors": worst}
     (REPORTS_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2))
 
