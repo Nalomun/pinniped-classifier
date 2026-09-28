@@ -93,19 +93,23 @@ class CalibReader:
         return {self.name: x}
 
 
-def quantize(fp32_path: Path, int8_path: Path, calib_df: pd.DataFrame, mean, std):
+def quantize(fp32_path: Path, int8_path: Path, calib_df: pd.DataFrame, mean, std, img_size: int, method: str = "percentile"):
+    """Static int8 quantization (QDQ, per-channel weights). MobileNetV3's hardswish + SE blocks
+    produce activation outliers, so plain MinMax calibration can wreck accuracy; percentile /
+    entropy calibration clip those outliers. main() tries several and keeps the best on val."""
     from onnxruntime.quantization import CalibrationMethod, QuantFormat, QuantType, quantize_static
     from onnxruntime.quantization.shape_inference import quant_pre_process
 
+    methods = {"minmax": CalibrationMethod.MinMax, "percentile": CalibrationMethod.Percentile, "entropy": CalibrationMethod.Entropy}
     pre = fp32_path.with_suffix(".pre.onnx")
     quant_pre_process(str(fp32_path), str(pre))
     sess = ort.InferenceSession(str(pre), providers=["CPUExecutionProvider"])
     reader = CalibReader(calib_df, sess.get_inputs()[0].name, mean, std, img_size)
     quantize_static(str(pre), str(int8_path), reader, quant_format=QuantFormat.QDQ, per_channel=True,
                     activation_type=QuantType.QUInt8, weight_type=QuantType.QInt8,
-                    calibrate_method=CalibrationMethod.MinMax)
+                    calibrate_method=methods[method], extra_options={"CalibMovingAverage": True} if method == "minmax" else {})
     pre.unlink(missing_ok=True)
-    print(f"[quant] wrote {int8_path} ({int8_path.stat().st_size/1e6:.1f} MB)")
+    print(f"[quant:{method}] wrote {int8_path} ({int8_path.stat().st_size/1e6:.1f} MB)")
 
 
 def main():
