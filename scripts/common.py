@@ -31,43 +31,52 @@ FUR_SEAL_GENERA = {"Arctocephalus", "Callorhinus"}
 # ---------------------------------------------------------------------------
 # For pinniped classes we enumerate species under the family and "water-fill" the
 # observation budget across species so no single species dominates.
+# Budgets are ~40% above the final target because scripts/filter.py later drops photos
+# where no animal is visible (distant specks, carcasses, tracks, skulls...).
 PINNIPED_TAXA = {
-    "true_seal": {"family": "Phocidae", "target_obs": 1600, "photos_per_obs": 2},
+    "true_seal": {"family": "Phocidae", "target_obs": 2300, "photos_per_obs": 2},
     "eared_seal": {
         "family": "Otariidae",
         # Separate budgets so fur seals are well represented (they are the whole
         # point of the app's "seal vs sea lion" correction).
-        "subgroups": {"fur_seal": 850, "sea_lion": 850},
+        "subgroups": {"fur_seal": 1200, "sea_lion": 1200},
         "photos_per_obs": 2,
     },
     "walrus": {"family": "Odobenidae", "target_obs": 10_000, "photos_per_obs": 3},
 }
 
+# iNaturalist annotation (term_id, value_id) pairs that mean "this photo is not of a live,
+# visible animal". Observations carrying any of these are skipped at download time.
+# 17 = Alive or Dead (19 = Dead); 22 = Evidence of Presence (25 scat, 26 track, 29 bone,
+# 23 feather, 35 egg, 36 hair, 37 leafmine, 38 gall, 39 molt).
+EXCLUDED_ANNOTATIONS = {(17, 19), (22, 25), (22, 26), (22, 29), (22, 23), (22, 35), (22, 36), (22, 37), (22, 38), (22, 39)}
+MIN_IMAGE_SIDE = 200  # px; smaller "medium" files are really thumbnails of deleted originals
+
 # Negatives: (taxon name, rank hint, observation budget, bucket). Lookalikes get
 # the largest share because that is where a pinniped model gets fooled.
 NEGATIVE_TAXA = [
     # --- lookalikes (marine / semi-aquatic / blubbery / lying on rocks) ---
-    ("Lutrinae", "subfamily", 320, "lookalike"),        # otters incl. sea otter
-    ("Sirenia", "order", 220, "lookalike"),             # manatees, dugong
-    ("Delphinidae", "family", 220, "lookalike"),        # dolphins, orcas
-    ("Mysticeti", "parvorder", 100, "lookalike"),       # baleen whales
-    ("Spheniscidae", "family", 260, "lookalike"),       # penguins
-    ("Ursidae", "family", 160, "lookalike"),            # bears (closest land relatives)
-    ("Hippopotamidae", "family", 100, "lookalike"),     # hippos
-    ("Cheloniidae", "family", 150, "lookalike"),        # sea turtles on beaches
-    ("Castor", "genus", 100, "lookalike"),              # beavers
-    ("Crocodylia", "order", 100, "lookalike"),          # crocs basking
+    ("Lutrinae", "subfamily", 420, "lookalike"),        # otters incl. sea otter
+    ("Sirenia", "order", 300, "lookalike"),             # manatees, dugong
+    ("Delphinidae", "family", 300, "lookalike"),        # dolphins, orcas
+    ("Mysticeti", "parvorder", 140, "lookalike"),       # baleen whales
+    ("Spheniscidae", "family", 340, "lookalike"),       # penguins
+    ("Ursidae", "family", 220, "lookalike"),            # bears (closest land relatives)
+    ("Hippopotamidae", "family", 140, "lookalike"),     # hippos
+    ("Cheloniidae", "family", 200, "lookalike"),        # sea turtles on beaches
+    ("Castor", "genus", 140, "lookalike"),              # beavers
+    ("Crocodylia", "order", 140, "lookalike"),          # crocs basking
     # --- other common animals ---
-    ("Canis familiaris", "species", 160, "other_animal"),
-    ("Felis catus", "species", 100, "other_animal"),
-    ("Cervidae", "family", 100, "other_animal"),
-    ("Bovidae", "family", 80, "other_animal"),
-    ("Laridae", "family", 120, "other_animal"),         # gulls: share beaches with seals
-    ("Phalacrocoracidae", "family", 100, "other_animal"),  # cormorants on the same rocks
+    ("Canis familiaris", "species", 220, "other_animal"),
+    ("Felis catus", "species", 140, "other_animal"),
+    ("Cervidae", "family", 140, "other_animal"),
+    ("Bovidae", "family", 110, "other_animal"),
+    ("Laridae", "family", 160, "other_animal"),         # gulls: share beaches with seals
+    ("Phalacrocoracidae", "family", 140, "other_animal"),  # cormorants on the same rocks
     # --- a small slice of non-animals so "my lunch" and "a plant" also get roasted ---
-    ("Plantae", "kingdom", 100, "non_animal"),
-    ("Fungi", "kingdom", 50, "non_animal"),
-    ("Insecta", "class", 100, "non_animal"),
+    ("Plantae", "kingdom", 140, "non_animal"),
+    ("Fungi", "kingdom", 70, "non_animal"),
+    ("Insecta", "class", 140, "non_animal"),
 ]
 NEGATIVE_PHOTOS_PER_OBS = 1
 

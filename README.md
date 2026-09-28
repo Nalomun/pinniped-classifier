@@ -133,7 +133,7 @@ pip install --index-url https://download.pytorch.org/whl/cpu torch==2.14.0 torch
 pip install -r requirements.txt
 
 python scripts/download.py --from-manifest   # ~8k photos, ~800 MB; exact committed dataset
-# python scripts/download.py && python scripts/split.py   # ...or draw a fresh sample
+# python scripts/download.py && python scripts/filter.py && python scripts/split.py   # ...or draw a fresh sample
 python scripts/train.py                      # -> outputs/best.pt
 python scripts/eval.py                       # -> reports/metrics.json + figures, tunes threshold on val
 python scripts/export.py                     # -> export/pinniped.onnx (+ int8 if it survives), model_meta.json
@@ -150,6 +150,7 @@ trains, evaluates, exports and zips the artefacts.
 ```
 scripts/common.py     class order, taxa config, preprocessing spec (single source of truth)
 scripts/download.py   iNaturalist sampling + download -> data/manifest.csv
+scripts/filter.py     CLIP zero-shot 'is an animal visible?' filter -> manifest_unfiltered.csv + manifest.csv
 scripts/split.py      observation-grouped 70/15/15 split -> manifest `split` column
 scripts/train.py      timm fine-tuning
 scripts/eval.py       metrics, confusion matrix, worst errors, threshold tuning
@@ -157,7 +158,8 @@ scripts/export.py     ONNX + int8 + model_meta.json
 scripts/parity.py     PyTorch vs onnxruntime check on reports/parity_samples/
 scripts/predict.py    CLI inference with the ONNX model (torch-free preprocessing)
 notebooks/train_colab.ipynb
-data/manifest.csv     every image: observation, species, license, attribution, URL, split
+data/manifest.csv     every kept image: observation, species, license, attribution, URL, CLIP score, split
+data/manifest_unfiltered.csv  same, before the visibility filter (so the filtering is auditable)
 export/               pinniped.onnx, pinniped_int8.onnx, model_meta.json
 reports/              metrics.json, figures, per_species.csv, parity.json, parity_samples/
 ```
