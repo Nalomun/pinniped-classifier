@@ -1,0 +1,23 @@
+# Raw dataset (reproducible from data/manifest.csv via scripts/download.py)
+data/images/
+data/cache/
+data/*.tmp
+
+# Training outputs / checkpoints
+outputs/
+*.pt
+*.pth
+*.ckpt
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.egg-info/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
