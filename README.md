@@ -45,7 +45,15 @@ observations). To get species and geographic variety, the observation budget for
 are capped at an equal share of what's left. Otariidae gets two separate budgets, one for fur
 seals and one for sea lions, because fur seals are the case this whole app exists for.
 
-<!-- DATA_TABLE -->
+| Class | Observations | Photos | Species |
+|---|---|---|---|
+| `true_seal` (Phocidae) | 1 600 | 2 341 | 19 |
+| `eared_seal` (Otariidae) | 1 700 | 2 348 (1 161 fur seal, 1 187 sea lion) | 15 (9 fur seal, 6 sea lion) |
+| `walrus` (Odobenidae) | 167 | 282 | 1 (all licensed research-grade walrus observations there are) |
+| `not_pinniped` | 2 640 | 2 640 | 19 negative taxa |
+| **total** | **6 107** | **7 611** | from 1 916 photographers; 81 % CC-BY, 19 % CC0 |
+
+Split by observation: 4 271 train / 918 val / 918 test observations (5 358 / 1 131 / 1 122 photos).
 
 The `not_pinniped` class is deliberately weighted toward **lookalikes**: otters, manatees and
 dugongs, dolphins and whales, penguins, bears, hippos, sea turtles, beavers, crocodilians. Then
@@ -88,7 +96,31 @@ with ImageNet mean/std → NCHW, RGB.
 
 ## Results
 
+> **Status: training not yet complete.** The full 12-epoch run was interrupted at epoch 3
+> (laptop battery). The evaluation, export and parity scripts have been validated on that
+> epoch-3 checkpoint, but the numbers below are placeholders until the run is redone on
+> Colab. Interim epoch-3 result: 80.7 % pinniped test accuracy, below the 95 % bar. See
+> "Why the bar was missed" for the diagnosis, which does not depend on finishing the run.
+
 <!-- RESULTS -->
+
+### Why the bar was missed
+
+Research-grade iNaturalist data is *not* "a photo of an animal". A large share of
+observations are a distant speck in the water, an aerial view of a colony, a carcass, a
+skull, a single flipper, or a track. Evidence:
+
+* iNaturalist's own annotations mark **8.4 % of all eared-seal observations as dead animals**
+  (only ~26 % of observations carry any annotation, so the true rate is higher).
+* A frozen **DINOv2 ViT-S** (21.6 M params, 5× our model) with a linear probe reaches only
+  **83 %** on the validation set; our MobileNetV3 backbone gets 78 % the same way. A much
+  stronger encoder buys ~5 points, so the data, not the model, is the ceiling.
+* The worst-error grid above is mostly photos a human could not classify at 224 px either.
+
+Planned fix (v2 of the dataset): exclude observations annotated dead / track / scat / bone via
+the API's `term_value_id` filters, drop tiny images, and filter out photos where no animal
+occupies a reasonable fraction of the frame, so the training and test distributions match
+what a visitor actually uploads (a phone photo of an animal in front of them).
 
 ## Reproduce
 
