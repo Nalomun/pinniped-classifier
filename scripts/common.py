@@ -86,7 +86,11 @@ ALLOWED_LICENSES = {"cc0", "cc-by"}
 # Preprocessing spec (shared by train/eval/export/parity and the browser).
 # ---------------------------------------------------------------------------
 IMG_SIZE = 224
-RESIZE_SHORTER = 256
+RESIZE_SHORTER = 256  # = IMG_SIZE / 0.875, the standard ImageNet crop fraction
+
+
+def resize_for(img_size: int) -> int:
+    return int(round(img_size / 0.875))
 # Default normalisation. NOTE: the mean/std actually used are taken from the pretrained
 # weights' config at training time and stored in the checkpoint / model_meta.json, because
 # they differ between weight sets (e.g. timm's *.miil_in21k_ft_in1k weights expect raw [0,1]
@@ -95,12 +99,12 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
-def preprocess_spec(mean, std) -> dict:
+def preprocess_spec(mean, std, img_size: int = IMG_SIZE) -> dict:
     return {
         "color_space": "RGB",
         "steps": [
-            {"op": "resize_shorter_side", "size": RESIZE_SHORTER, "interpolation": "bilinear"},
-            {"op": "center_crop", "size": IMG_SIZE},
+            {"op": "resize_shorter_side", "size": resize_for(img_size), "interpolation": "bilinear"},
+            {"op": "center_crop", "size": img_size},
             {"op": "to_float", "scale": "divide_by_255"},
             {"op": "normalize", "mean": list(mean), "std": list(std)},
             {"op": "layout", "value": "NCHW"},
@@ -129,28 +133,28 @@ def get_device(requested: str = "auto") -> str:
     return "cpu"
 
 
-def eval_transform(mean=IMAGENET_MEAN, std=IMAGENET_STD):
+def eval_transform(mean=IMAGENET_MEAN, std=IMAGENET_STD, img_size: int = IMG_SIZE):
     """Deterministic transform used for val/test/export/parity. Must match preprocess_spec()."""
     from torchvision import transforms as T
 
     return T.Compose(
         [
-            T.Resize(RESIZE_SHORTER, interpolation=T.InterpolationMode.BILINEAR),
-            T.CenterCrop(IMG_SIZE),
+            T.Resize(resize_for(img_size), interpolation=T.InterpolationMode.BILINEAR),
+            T.CenterCrop(img_size),
             T.ToTensor(),
             T.Normalize(list(mean), list(std)),
         ]
     )
 
 
-def train_transform(mean=IMAGENET_MEAN, std=IMAGENET_STD):
+def train_transform(mean=IMAGENET_MEAN, std=IMAGENET_STD, img_size: int = IMG_SIZE):
     """Augmentation for training. Backgrounds (water/sand/ice/rock) and lighting
     vary a lot across iNat photos, so we crop aggressively and jitter colour."""
     from torchvision import transforms as T
 
     return T.Compose(
         [
-            T.RandomResizedCrop(IMG_SIZE, scale=(0.35, 1.0), ratio=(0.75, 1.333)),
+            T.RandomResizedCrop(img_size, scale=(0.35, 1.0), ratio=(0.75, 1.333)),
             T.RandomHorizontalFlip(),
             T.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.03),
             T.ToTensor(),

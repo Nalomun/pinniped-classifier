@@ -58,8 +58,8 @@ def load_checkpoint(path: Path, device: str):
 
 
 @torch.no_grad()
-def predict_probs(model, df: pd.DataFrame, device: str, mean, std, batch_size: int = 128, workers: int = 4) -> np.ndarray:
-    ds = ManifestDataset(df, eval_transform(mean, std))
+def predict_probs(model, df: pd.DataFrame, device: str, mean, std, img_size: int = 224, batch_size: int = 128, workers: int = 4) -> np.ndarray:
+    ds = ManifestDataset(df, eval_transform(mean, std, img_size))
     loader = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=workers)
     out = []
     for x, _ in loader:
@@ -230,8 +230,9 @@ def main():
     print(f"loaded {args.checkpoint} ({ck['model']}, best val epoch {ck.get('val')})")
 
     val_df, test_df = load_manifest("val"), load_manifest("test")
-    val_probs = predict_probs(model, val_df, device, ck["mean"], ck["std"], workers=args.workers)
-    test_probs = predict_probs(model, test_df, device, ck["mean"], ck["std"], workers=args.workers)
+    img_size = ck.get("img_size", 224)
+    val_probs = predict_probs(model, val_df, device, ck["mean"], ck["std"], img_size, workers=args.workers)
+    test_probs = predict_probs(model, test_df, device, ck["mean"], ck["std"], img_size, workers=args.workers)
     np.savez(OUTPUTS_DIR / "probs.npz", val=val_probs, test=test_probs)
 
     threshold, sweep = tune_threshold(val_probs, val_df["class"].map(CLASSES.index).to_numpy())
@@ -249,7 +250,7 @@ def main():
                    .agg(n="size", acc="mean").reset_index().sort_values(["class", "acc"]))
     per_species.to_csv(REPORTS_DIR / "per_species.csv", index=False)
 
-    metrics = {"model": ck["model"], "tag": ck["tag"], "best_epoch": ck.get("val"), "threshold": threshold,
+    metrics = {"model": ck["model"], "tag": ck["tag"], "img_size": img_size, "best_epoch": ck.get("val"), "threshold": threshold,
                "val": val_m, "test": test_m, "worst_test_errors": worst}
     (REPORTS_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2))
 

@@ -35,11 +35,11 @@ from common import (  # noqa: E402
     OUTPUTS_DIR,
     PINNIPED_CLASSES,
     REPORTS_DIR,
-    RESIZE_SHORTER,
     ManifestDataset,
     eval_transform,
     load_manifest,
     preprocess_spec,
+    resize_for,
 )
 from eval import compute_metrics, load_checkpoint  # noqa: E402
 
@@ -50,9 +50,9 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def export_onnx(model, path: Path):
+def export_onnx(model, path: Path, img_size: int):
     model.eval()
-    dummy = torch.randn(1, 3, IMG_SIZE, IMG_SIZE)
+    dummy = torch.randn(1, 3, img_size, img_size)
     try:
         torch.onnx.export(model, dummy, str(path), input_names=["input"], output_names=["logits"],
                           dynamic_axes={"input": {0: "batch"}, "logits": {0: "batch"}}, opset_version=OPSET, dynamo=False)
@@ -66,10 +66,10 @@ def export_onnx(model, path: Path):
     print(f"[export] wrote {path} ({path.stat().st_size/1e6:.1f} MB) via {how}")
 
 
-def onnx_probs(path: Path, df: pd.DataFrame, mean, std, batch_size: int = 64) -> np.ndarray:
+def onnx_probs(path: Path, df: pd.DataFrame, mean, std, img_size: int, batch_size: int = 64) -> np.ndarray:
     sess = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
     name = sess.get_inputs()[0].name
-    ds = ManifestDataset(df, eval_transform(mean, std))
+    ds = ManifestDataset(df, eval_transform(mean, std, img_size))
     out = []
     for i in range(0, len(ds), batch_size):
         x = torch.stack([ds[j][0] for j in range(i, min(i + batch_size, len(ds)))]).numpy()
@@ -81,8 +81,8 @@ def onnx_probs(path: Path, df: pd.DataFrame, mean, std, batch_size: int = 64) ->
 class CalibReader:
     """Feeds val images to the static quantizer."""
 
-    def __init__(self, df: pd.DataFrame, input_name: str, mean, std, batch_size: int = 16):
-        self.ds = ManifestDataset(df, eval_transform(mean, std))
+    def __init__(self, df: pd.DataFrame, input_name: str, mean, std, img_size: int, batch_size: int = 16):
+        self.ds = ManifestDataset(df, eval_transform(mean, std, img_size))
         self.name, self.bs, self.i = input_name, batch_size, 0
 
     def get_next(self):
@@ -100,7 +100,7 @@ def quantize(fp32_path: Path, int8_path: Path, calib_df: pd.DataFrame, mean, std
     pre = fp32_path.with_suffix(".pre.onnx")
     quant_pre_process(str(fp32_path), str(pre))
     sess = ort.InferenceSession(str(pre), providers=["CPUExecutionProvider"])
-    reader = CalibReader(calib_df, sess.get_inputs()[0].name, mean, std)
+    reader = CalibReader(calib_df, sess.get_inputs()[0].name, mean, std, img_size)
     quantize_static(str(pre), str(int8_path), reader, quant_format=QuantFormat.QDQ, per_channel=True,
                     activation_type=QuantType.QUInt8, weight_type=QuantType.QInt8,
                     calibrate_method=CalibrationMethod.MinMax)
@@ -119,13 +119,14 @@ def main():
     EXPORT_DIR.mkdir(exist_ok=True)
     model, ck = load_checkpoint(Path(args.checkpoint), "cpu")
     mean, std = ck["mean"], ck["std"]
+    img_size = ck.get("img_size", IMG_SIZE)
     metrics = json.loads((REPORTS_DIR / "metrics.json").read_text())
     threshold = metrics["threshold"]
     test_df, val_df = load_manifest("test"), load_manifest("val")
 
     fp32_path = EXPORT_DIR / "pinniped.onnx"
-    export_onnx(model, fp32_path)
-    fp32_m = compute_metrics(onnx_probs(fp32_path, test_df, mean, std), test_df, threshold)
+    export_onnx(model, fp32_path, img_size)
+    fp32_m = compute_metrics(onnx_probs(fp32_path, test_df, mean, std, img_size), test_df, threshold)
     torch_m = metrics["test"]
     print(f"[fp32 onnx] test acc={fp32_m['accuracy_4way']:.4f} pinniped={fp32_m['pinniped_acc_strict']:.4f} "
           f"(torch: {torch_m['accuracy_4way']:.4f} / {torch_m['pinniped_acc_strict']:.4f})")
@@ -141,8 +142,8 @@ def main():
         val_scores = {}
         for method in ["percentile", "entropy", "minmax"]:
             cand = int8_path.with_name(f"pinniped_int8_{method}.onnx")
-            quantize(fp32_path, cand, calib_df, mean, std, method)
-            vm = compute_metrics(onnx_probs(cand, val_df, mean, std), val_df)
+            quantize(fp32_path, cand, calib_df, mean, std, img_size, method)
+            vm = compute_metrics(onnx_probs(cand, val_df, mean, std, img_size), val_df)
             val_scores[method] = vm["pinniped_acc_strict"]
             print(f"[quant:{method}] val pinniped acc={vm['pinniped_acc_strict']:.4f} acc={vm['accuracy_4way']:.4f}")
         best_method = max(val_scores, key=val_scores.get)
@@ -153,7 +154,7 @@ def main():
             else:
                 cand.unlink(missing_ok=True)
         print(f"[quant] best calibration on val: {best_method}")
-        int8_m = compute_metrics(onnx_probs(int8_path, test_df, mean, std), test_df, threshold)
+        int8_m = compute_metrics(onnx_probs(int8_path, test_df, mean, std, img_size), test_df, threshold)
         drop_acc = 100 * (fp32_m["accuracy_4way"] - int8_m["accuracy_4way"])
         drop_pin = 100 * (fp32_m["pinniped_acc_strict"] - int8_m["pinniped_acc_strict"])
         keep = drop_acc < args.max_drop and drop_pin < args.max_drop
@@ -187,11 +188,11 @@ def main():
             "walrus": "Odobenidae",
             "not_pinniped": "anything else",
         },
-        "input": {"name": "input", "shape": [1, 3, IMG_SIZE, IMG_SIZE], "dtype": "float32", "layout": "NCHW", "color_space": "RGB"},
+        "input": {"name": "input", "shape": [1, 3, img_size, img_size], "dtype": "float32", "layout": "NCHW", "color_space": "RGB"},
         "output": {"name": "logits", "shape": [1, len(CLASSES)], "note": "raw logits; apply softmax to get probabilities"},
-        "preprocessing": preprocess_spec(mean, std),
-        "resize_shorter_side": RESIZE_SHORTER,
-        "crop_size": IMG_SIZE,
+        "preprocessing": preprocess_spec(mean, std, img_size),
+        "resize_shorter_side": resize_for(img_size),
+        "crop_size": img_size,
         "mean": mean,
         "std": std,
         "threshold": threshold,
