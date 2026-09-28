@@ -135,10 +135,10 @@ def main():
     sampler = None
     if args.balance > 0:
         counts = train_df["class"].value_counts()
-        w = train_df["class"].map(lambda c: counts[c] ** -args.balance).to_numpy()
+        w = train_df["class"].map(lambda c: counts[c] ** -args.balance).to_numpy().copy()
         sampler = WeightedRandomSampler(torch.as_tensor(w, dtype=torch.double), num_samples=len(train_ds), replacement=True,
                                         generator=torch.Generator().manual_seed(args.seed))
-        eff = {c: round(len(train_ds) * counts[c] ** (1 - args.balance) / sum(counts[k] ** (1 - args.balance) for k in counts)) for c in counts.index}
+        eff = {c: round(len(train_ds) * counts[c] ** (1 - args.balance) / sum(counts[k] ** (1 - args.balance) for k in counts.index)) for c in counts.index}
         print(f"balanced sampling (exponent {args.balance}); expected samples/epoch: {eff}")
     train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=sampler is None, sampler=sampler, num_workers=args.workers,
                               pin_memory=pin, drop_last=True, persistent_workers=args.workers > 0)
