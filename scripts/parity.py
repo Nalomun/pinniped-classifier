@@ -41,7 +41,7 @@ def main():
     rows = (test_df.sort_values("photo_id").groupby("class", sort=True).head(args.per_class)).to_dict("records")
 
     model, ck = load_checkpoint(Path(args.checkpoint), "cpu")
-    tf = eval_transform(ck["mean"], ck["std"])
+    tf = eval_transform(ck["mean"], ck["std"], ck.get("img_size", 224))
     sessions = {"onnx_fp32": ort.InferenceSession(str(EXPORT_DIR / "pinniped.onnx"), providers=["CPUExecutionProvider"])}
     if (EXPORT_DIR / "pinniped_int8.onnx").exists():
         sessions["onnx_int8"] = ort.InferenceSession(str(EXPORT_DIR / "pinniped_int8.onnx"), providers=["CPUExecutionProvider"])

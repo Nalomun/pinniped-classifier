@@ -31,7 +31,7 @@ import numpy as np
 import timm
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (  # noqa: E402
@@ -101,6 +101,10 @@ def main():
     ap.add_argument("--weight-decay", type=float, default=0.02)
     ap.add_argument("--label-smoothing", type=float, default=0.1)
     ap.add_argument("--warmup-epochs", type=float, default=1.0)
+    ap.add_argument("--balance", type=float, default=0.0,
+                    help="class-balanced sampling: sample weight = count^-balance (0 = off, 0.5 = square-root balancing, 1 = fully balanced). "
+                         "Walrus has ~10x fewer photos than the other classes and its recall collapses without this.")
+    ap.add_argument("--img-size", type=int, default=224, help="input resolution; 224 is standard, 288 helps small/distant animals at ~1.65x compute")
     ap.add_argument("--workers", type=int, default=2, help="2 is plenty on CPU (decode is ~20x faster than the model); more just fights torch for cores")
     ap.add_argument("--device", default="auto")
     ap.add_argument("--seed", type=int, default=42)
@@ -125,10 +129,18 @@ def main():
 
     mean, std = model_norm(args.model)
     print(f"input normalisation from pretrained cfg: mean={mean} std={std}")
-    train_ds = ManifestDataset(train_df, train_transform(mean, std))
-    val_ds = ManifestDataset(val_df, eval_transform(mean, std))
+    train_ds = ManifestDataset(train_df, train_transform(mean, std, args.img_size))
+    val_ds = ManifestDataset(val_df, eval_transform(mean, std, args.img_size))
     pin = device == "cuda"
-    train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=args.workers,
+    sampler = None
+    if args.balance > 0:
+        counts = train_df["class"].value_counts()
+        w = train_df["class"].map(lambda c: counts[c] ** -args.balance).to_numpy()
+        sampler = WeightedRandomSampler(torch.as_tensor(w, dtype=torch.double), num_samples=len(train_ds), replacement=True,
+                                        generator=torch.Generator().manual_seed(args.seed))
+        eff = {c: round(len(train_ds) * counts[c] ** (1 - args.balance) / sum(counts[k] ** (1 - args.balance) for k in counts)) for c in counts.index}
+        print(f"balanced sampling (exponent {args.balance}); expected samples/epoch: {eff}")
+    train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=sampler is None, sampler=sampler, num_workers=args.workers,
                               pin_memory=pin, drop_last=True, persistent_workers=args.workers > 0)
     val_loader = DataLoader(val_ds, batch_size=args.batch_size * 2, shuffle=False, num_workers=args.workers, pin_memory=pin)
 
@@ -185,7 +197,7 @@ def main():
         # Model selection on pinniped accuracy (the ship bar), ties broken by overall acc.
         if (val["pinniped_acc"], val["acc"]) > (best["pinniped_acc"], best["acc"]):
             best = {**val, "epoch": epoch + 1}
-            torch.save({"model": args.model, "tag": MODEL_TAGS[args.model], "classes": CLASSES, "mean": mean, "std": std, "state_dict": model.state_dict(), "args": vars(args), "val": val},
+            torch.save({"model": args.model, "tag": MODEL_TAGS[args.model], "classes": CLASSES, "mean": mean, "std": std, "img_size": args.img_size, "state_dict": model.state_dict(), "args": vars(args), "val": val},
                        out_dir / "best.pt")
             print(f"  saved best (val pinniped_acc={val['pinniped_acc']:.4f}, acc={val['acc']:.4f})")
 
