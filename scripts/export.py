@@ -30,18 +30,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (  # noqa: E402
     CLASSES,
     EXPORT_DIR,
-    IMAGENET_MEAN,
-    IMAGENET_STD,
     IMG_SIZE,
     MANIFEST_CSV,
     OUTPUTS_DIR,
     PINNIPED_CLASSES,
-    PREPROCESS,
     REPORTS_DIR,
     RESIZE_SHORTER,
     ManifestDataset,
     eval_transform,
     load_manifest,
+    preprocess_spec,
 )
 from eval import compute_metrics, load_checkpoint  # noqa: E402
 
@@ -68,10 +66,10 @@ def export_onnx(model, path: Path):
     print(f"[export] wrote {path} ({path.stat().st_size/1e6:.1f} MB) via {how}")
 
 
-def onnx_probs(path: Path, df: pd.DataFrame, batch_size: int = 64) -> np.ndarray:
+def onnx_probs(path: Path, df: pd.DataFrame, mean, std, batch_size: int = 64) -> np.ndarray:
     sess = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
     name = sess.get_inputs()[0].name
-    ds = ManifestDataset(df, eval_transform())
+    ds = ManifestDataset(df, eval_transform(mean, std))
     out = []
     for i in range(0, len(ds), batch_size):
         x = torch.stack([ds[j][0] for j in range(i, min(i + batch_size, len(ds)))]).numpy()
@@ -83,8 +81,8 @@ def onnx_probs(path: Path, df: pd.DataFrame, batch_size: int = 64) -> np.ndarray
 class CalibReader:
     """Feeds val images to the static quantizer."""
 
-    def __init__(self, df: pd.DataFrame, input_name: str, batch_size: int = 16):
-        self.ds = ManifestDataset(df, eval_transform())
+    def __init__(self, df: pd.DataFrame, input_name: str, mean, std, batch_size: int = 16):
+        self.ds = ManifestDataset(df, eval_transform(mean, std))
         self.name, self.bs, self.i = input_name, batch_size, 0
 
     def get_next(self):
@@ -95,14 +93,14 @@ class CalibReader:
         return {self.name: x}
 
 
-def quantize(fp32_path: Path, int8_path: Path, calib_df: pd.DataFrame):
+def quantize(fp32_path: Path, int8_path: Path, calib_df: pd.DataFrame, mean, std):
     from onnxruntime.quantization import CalibrationMethod, QuantFormat, QuantType, quantize_static
     from onnxruntime.quantization.shape_inference import quant_pre_process
 
     pre = fp32_path.with_suffix(".pre.onnx")
     quant_pre_process(str(fp32_path), str(pre))
     sess = ort.InferenceSession(str(pre), providers=["CPUExecutionProvider"])
-    reader = CalibReader(calib_df, sess.get_inputs()[0].name)
+    reader = CalibReader(calib_df, sess.get_inputs()[0].name, mean, std)
     quantize_static(str(pre), str(int8_path), reader, quant_format=QuantFormat.QDQ, per_channel=True,
                     activation_type=QuantType.QUInt8, weight_type=QuantType.QInt8,
                     calibrate_method=CalibrationMethod.MinMax)
@@ -120,13 +118,14 @@ def main():
 
     EXPORT_DIR.mkdir(exist_ok=True)
     model, ck = load_checkpoint(Path(args.checkpoint), "cpu")
+    mean, std = ck["mean"], ck["std"]
     metrics = json.loads((REPORTS_DIR / "metrics.json").read_text())
     threshold = metrics["threshold"]
     test_df, val_df = load_manifest("test"), load_manifest("val")
 
     fp32_path = EXPORT_DIR / "pinniped.onnx"
     export_onnx(model, fp32_path)
-    fp32_m = compute_metrics(onnx_probs(fp32_path, test_df), test_df, threshold)
+    fp32_m = compute_metrics(onnx_probs(fp32_path, test_df, mean, std), test_df, threshold)
     torch_m = metrics["test"]
     print(f"[fp32 onnx] test acc={fp32_m['accuracy_4way']:.4f} pinniped={fp32_m['pinniped_acc_strict']:.4f} "
           f"(torch: {torch_m['accuracy_4way']:.4f} / {torch_m['pinniped_acc_strict']:.4f})")
@@ -138,8 +137,8 @@ def main():
     int8_path = EXPORT_DIR / "pinniped_int8.onnx"
     if not args.skip_quant:
         calib_df = val_df.sample(n=min(args.calib_images, len(val_df)), random_state=0)
-        quantize(fp32_path, int8_path, calib_df)
-        int8_m = compute_metrics(onnx_probs(int8_path, test_df), test_df, threshold)
+        quantize(fp32_path, int8_path, calib_df, mean, std)
+        int8_m = compute_metrics(onnx_probs(int8_path, test_df, mean, std), test_df, threshold)
         drop_acc = 100 * (fp32_m["accuracy_4way"] - int8_m["accuracy_4way"])
         drop_pin = 100 * (fp32_m["pinniped_acc_strict"] - int8_m["pinniped_acc_strict"])
         keep = drop_acc < args.max_drop and drop_pin < args.max_drop
@@ -174,11 +173,11 @@ def main():
         },
         "input": {"name": "input", "shape": [1, 3, IMG_SIZE, IMG_SIZE], "dtype": "float32", "layout": "NCHW", "color_space": "RGB"},
         "output": {"name": "logits", "shape": [1, len(CLASSES)], "note": "raw logits; apply softmax to get probabilities"},
-        "preprocessing": PREPROCESS,
+        "preprocessing": preprocess_spec(mean, std),
         "resize_shorter_side": RESIZE_SHORTER,
         "crop_size": IMG_SIZE,
-        "mean": IMAGENET_MEAN,
-        "std": IMAGENET_STD,
+        "mean": mean,
+        "std": std,
         "threshold": threshold,
         "decision_rule": ("argmax over the 4 probabilities. If the argmax is a pinniped class and its probability is below "
                           "`threshold`, show the 'unsure' response instead. If the argmax is not_pinniped, show the not-a-seal response."),
