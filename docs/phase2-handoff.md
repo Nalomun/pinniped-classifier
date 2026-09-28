@@ -44,24 +44,25 @@ short footnote, not just assert it.
 
 | Training repo path | Purpose |
 |---|---|
-| `export/pinniped.onnx` | the model, **fp32, 16.8 MB**, ONNX opset 17. sha256 `a9f32cdb…605f32` (full hash in `model_meta.json`). There is no int8 model; it was discarded for accuracy. |
+| `export/pinniped_w8.onnx` | **the model to ship: 5.0 MB**, int8 weights with fp32 compute, ONNX opset 17. sha256 in `model_meta.json` (`recommended_file`). |
+| `export/pinniped.onnx` | the same model as plain fp32, 16.8 MB; fallback / reference only. |
 | `export/model_meta.json` | class order, input spec, preprocessing steps, mean/std, threshold. **The single source of truth for inference.** Load it or mirror it exactly. |
 | `reports/parity.json` | per-image expected probabilities for 12 sample images (from PyTorch and ONNX Runtime, which agree to 4e-7) |
 | `reports/parity_samples/*.jpg` | those 12 images (CC0/CC-BY, attribution in `parity.json`) |
 
-Put the model in the site's static assets (e.g. `public/models/pinniped.onnx`). A 16.8 MB
-file: make sure it is served with long cache headers and is **only fetched on `/seal`**.
+Put the model in the site's static assets (e.g. `public/models/pinniped_w8.onnx`). Make sure
+it is served with long cache headers and is **only fetched on `/seal`**.
 
 ## Exact inference spec (mirrors `model_meta.json`)
 
-- Input tensor name `input`, shape `[1, 3, 288, 288]`, float32, **NCHW**, **RGB**.
+- Input tensor name `input`, shape `[1, 3, 352, 352]`, float32, **NCHW**, **RGB**.
 - Output tensor name `logits`, shape `[1, 4]`, raw logits: apply **softmax**.
 - Class order (index → label): `0 true_seal`, `1 eared_seal`, `2 walrus`, `3 not_pinniped`.
 - Preprocessing, in order:
   1. decode the image **respecting EXIF orientation** (phone photos are often rotated; use
      `createImageBitmap(file, { imageOrientation: "from-image" })` or equivalent),
-  2. **resize so the shorter side is 329 px** (bilinear), keeping aspect ratio,
-  3. **centre-crop 288×288**,
+  2. **resize so the shorter side is 402 px** (bilinear), keeping aspect ratio,
+  3. **centre-crop 352×352**,
   4. convert to float and **divide by 255**,
   5. normalise with **mean `[0, 0, 0]`, std `[1, 1, 1]`** (these weights expect raw [0,1]
      inputs; this is a no-op, but implement it from the meta file so a future model with
@@ -99,7 +100,7 @@ first 5 values of the preprocessed tensor) to help debug a mismatch.
 - The `.wasm` binaries must be reachable: either copy them to `public/` and set
   `ort.env.wasm.wasmPaths`, or point `wasmPaths` at the matching-version jsDelivr/unpkg URL.
   Pin the `onnxruntime-web` version.
-- Show a loading state with progress while the 16.8 MB model downloads (fetch with a
+- Show a loading state with progress while the model downloads (fetch with a
   `ReadableStream` to get progress, then pass the `ArrayBuffer` to `InferenceSession.create`).
   Cache the session for the page's lifetime.
 
@@ -145,6 +146,35 @@ first 5 values of the preprocessed tensor) to help debug a mismatch.
 Add a card for this project to the **"Things I make"** section following the existing card
 pattern, with the appropriate status tag (`live` once deployed). Link it to `/seal` and to
 `https://github.com/Nalomun/pinniped-classifier`.
+
+## Model update (2026-09-28, after the page went live)
+
+The model file and its preprocessing spec changed. If the page already exists, this is a
+swap, not a rebuild:
+
+| | Before | **After** |
+|---|---|---|
+| File | `export/pinniped.onnx`, 16.8 MB fp32 | **`export/pinniped_w8.onnx`, 5.0 MB** (int8 weights, fp32 compute; `pinniped.onnx` still exists as the fp32 reference) |
+| sha256 | `a9f32cdb...` | `e120a7afd84683cdaa75e0a7b939a18ea62e4a1c28a7a39e72580a3d87fca74e` |
+| Input shape | `[1, 3, 288, 288]` | **`[1, 3, 352, 352]`** |
+| Resize shorter side to | 329 | **402** |
+| Centre crop | 288 | **352** |
+| Mean / std | 0 / 1 | 0 / 1 (unchanged) |
+| Threshold | 0.85 | 0.85 (re-tuned at 352, came out the same) |
+| Pinniped test accuracy | 88.5 % | **89.7 %** |
+
+Same network, run at a higher resolution than it was trained at (a known trick), stored with
+int8 weights. Inference is ~1.5x the compute of before; on a phone that's roughly 200-300 ms.
+
+What to do: copy the new `pinniped_w8.onnx` and the new `model_meta.json` (its
+`recommended_file` now says `pinniped_w8.onnx`), and read **every** preprocessing number from
+`model_meta.json` rather than from constants so the next swap is free. `reports/parity.json`
+and `reports/parity_samples/` were regenerated at 352 px: re-run the browser parity check
+against them (same rule: argmax must match on all 12, |dp| < ~0.05). `parity.json` now also
+carries `img_size`, `mean` and `std`, and its `onnx_w8` entries are the expected outputs of
+the int8-weight file specifically (they differ from `torch` by up to ~0.007). The weight-only
+model uses `DequantizeLinear` nodes (opset 17), which `onnxruntime-web`'s WASM backend
+supports; if the session fails to create, fall back to `pinniped.onnx` and report it.
 
 ## Done when
 

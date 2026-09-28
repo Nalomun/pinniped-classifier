@@ -1,7 +1,8 @@
 {
   "model": "mobilenetv3_large_100",
   "tag": "mobilenetv3_large_100.miil_in21k_ft_in1k",
-  "img_size": 288,
+  "img_size": 352,
+  "train_img_size": 288,
   "best_epoch": {
     "loss": 0.2938406765460968,
     "acc": 0.9162929654121399,
@@ -10,158 +11,158 @@
   "threshold": 0.85,
   "val": {
     "n": 1338,
-    "accuracy_4way": 0.9162929745889388,
-    "pinniped_acc_strict": 0.9033412887828163,
-    "pinniped_acc_3way": 0.9200477326968973,
+    "accuracy_4way": 0.9170403587443946,
+    "pinniped_acc_strict": 0.9081145584725537,
+    "pinniped_acc_3way": 0.9260143198090692,
     "pinniped_n": 838,
-    "fur_seal_acc": 0.8901734104046243,
+    "fur_seal_acc": 0.9132947976878613,
     "fur_seal_n": 173,
-    "sea_lion_acc": 0.8847926267281107,
+    "sea_lion_acc": 0.880184331797235,
     "sea_lion_n": 217,
     "per_class": {
       "true_seal": {
-        "precision": 0.8654708520179372,
-        "recall": 0.9368932038834952,
-        "f1": 0.8997668997668997,
+        "precision": 0.8696629213483146,
+        "recall": 0.9393203883495146,
+        "f1": 0.9031505250875146,
         "support": 412
       },
       "eared_seal": {
-        "precision": 0.9276139410187667,
-        "recall": 0.8871794871794871,
-        "f1": 0.9069462647444299,
+        "precision": 0.9184210526315789,
+        "recall": 0.8948717948717949,
+        "f1": 0.9064935064935065,
         "support": 390
       },
       "walrus": {
-        "precision": 0.9615384615384616,
+        "precision": 1.0,
         "recall": 0.6944444444444444,
-        "f1": 0.8064516129032258,
+        "f1": 0.819672131147541,
         "support": 36
       },
       "not_pinniped": {
-        "precision": 0.9513184584178499,
-        "recall": 0.938,
-        "f1": 0.9446122860020141,
+        "precision": 0.9549180327868853,
+        "recall": 0.932,
+        "f1": 0.9433198380566802,
         "support": 500
       }
     },
-    "not_pinniped_precision": 0.9513184584178499,
-    "not_pinniped_recall": 0.938,
+    "not_pinniped_precision": 0.9549180327868853,
+    "not_pinniped_recall": 0.932,
     "confusion_matrix": [
       [
-        386,
-        15,
-        1,
+        387,
+        14,
+        0,
+        11
+      ],
+      [
+        31,
+        349,
+        0,
         10
       ],
       [
-        30,
-        346,
-        0,
-        14
-      ],
-      [
         8,
-        3,
+        2,
         25,
-        0
+        1
       ],
       [
-        22,
-        9,
+        19,
+        15,
         0,
-        469
+        466
       ]
     ],
     "not_pinniped_recall_lookalike": 0.9034267912772586,
     "not_pinniped_recall_non_animal": 1.0,
-    "not_pinniped_recall_other_animal": 1.0,
+    "not_pinniped_recall_other_animal": 0.9763779527559056,
     "threshold": 0.85,
     "with_threshold": {
-      "pinniped_coverage": 0.7434367541766109,
-      "pinniped_acc_on_answered": 0.9390048154093098,
-      "pinniped_unsure_rate": 0.256563245823389,
-      "negatives_wrongly_called_pinniped_before": 31,
+      "pinniped_coverage": 0.7326968973747017,
+      "pinniped_acc_on_answered": 0.9429967426710097,
+      "pinniped_unsure_rate": 0.26730310262529833,
+      "negatives_wrongly_called_pinniped_before": 34,
       "negatives_wrongly_called_pinniped_after": 1,
-      "pinniped_errors_before": 81,
-      "pinniped_errors_after": 38
+      "pinniped_errors_before": 77,
+      "pinniped_errors_after": 35
     }
   },
   "test": {
     "n": 1317,
-    "accuracy_4way": 0.8982536066818527,
-    "pinniped_acc_strict": 0.8849449204406364,
-    "pinniped_acc_3way": 0.9106487148102815,
+    "accuracy_4way": 0.908883826879271,
+    "pinniped_acc_strict": 0.8971848225214198,
+    "pinniped_acc_3way": 0.9143206854345165,
     "pinniped_n": 817,
-    "fur_seal_acc": 0.9132947976878613,
+    "fur_seal_acc": 0.9248554913294798,
     "fur_seal_n": 173,
-    "sea_lion_acc": 0.88,
+    "sea_lion_acc": 0.91,
     "sea_lion_n": 200,
     "per_class": {
       "true_seal": {
-        "precision": 0.8735083532219571,
-        "recall": 0.8970588235294118,
-        "f1": 0.8851269649334945,
+        "precision": 0.8809523809523809,
+        "recall": 0.9068627450980392,
+        "f1": 0.893719806763285,
         "support": 408
       },
       "eared_seal": {
-        "precision": 0.8789473684210526,
-        "recall": 0.8954423592493298,
-        "f1": 0.8871181938911022,
+        "precision": 0.8929503916449086,
+        "recall": 0.9168900804289544,
+        "f1": 0.9047619047619048,
         "support": 373
       },
       "walrus": {
-        "precision": 0.8846153846153846,
-        "recall": 0.6388888888888888,
-        "f1": 0.7419354838709677,
+        "precision": 0.875,
+        "recall": 0.5833333333333334,
+        "f1": 0.7,
         "support": 36
       },
       "not_pinniped": {
-        "precision": 0.9349593495934959,
-        "recall": 0.92,
-        "f1": 0.9274193548387096,
+        "precision": 0.9469387755102041,
+        "recall": 0.928,
+        "f1": 0.9373737373737374,
         "support": 500
       }
     },
-    "not_pinniped_precision": 0.9349593495934959,
-    "not_pinniped_recall": 0.92,
+    "not_pinniped_precision": 0.9469387755102041,
+    "not_pinniped_recall": 0.928,
     "confusion_matrix": [
       [
-        366,
-        25,
-        1,
-        16
-      ],
-      [
-        25,
-        334,
-        1,
-        13
-      ],
-      [
-        6,
-        4,
+        370,
         23,
-        3
+        1,
+        14
       ],
       [
-        22,
-        17,
+        20,
+        342,
         1,
-        460
+        10
+      ],
+      [
+        9,
+        4,
+        21,
+        2
+      ],
+      [
+        21,
+        14,
+        1,
+        464
       ]
     ],
-    "not_pinniped_recall_lookalike": 0.8785046728971962,
+    "not_pinniped_recall_lookalike": 0.8909657320872274,
     "not_pinniped_recall_non_animal": 1.0,
     "not_pinniped_recall_other_animal": 0.9921259842519685,
     "threshold": 0.85,
     "with_threshold": {
-      "pinniped_coverage": 0.7539779681762546,
-      "pinniped_acc_on_answered": 0.9285714285714286,
-      "pinniped_unsure_rate": 0.2460220318237454,
-      "negatives_wrongly_called_pinniped_before": 40,
-      "negatives_wrongly_called_pinniped_after": 9,
-      "pinniped_errors_before": 94,
-      "pinniped_errors_after": 44
+      "pinniped_coverage": 0.7380660954712362,
+      "pinniped_acc_on_answered": 0.9353233830845771,
+      "pinniped_unsure_rate": 0.26193390452876375,
+      "negatives_wrongly_called_pinniped_before": 36,
+      "negatives_wrongly_called_pinniped_after": 8,
+      "pinniped_errors_before": 84,
+      "pinniped_errors_after": 39
     }
   },
   "worst_test_errors": [
@@ -169,79 +170,23 @@
       "photo_id": 529697381,
       "true": "not_pinniped",
       "pred": "true_seal",
-      "confidence": 0.973578691482544,
+      "confidence": 0.9728246927261353,
       "species": "Pygoscelis antarcticus",
       "url": "https://www.inaturalist.org/observations/294290419"
-    },
-    {
-      "photo_id": 417851764,
-      "true": "not_pinniped",
-      "pred": "eared_seal",
-      "confidence": 0.9474335312843323,
-      "species": "Lontra canadensis",
-      "url": "https://www.inaturalist.org/observations/234994335"
     },
     {
       "photo_id": 620444638,
       "true": "eared_seal",
       "pred": "true_seal",
-      "confidence": 0.944074809551239,
+      "confidence": 0.9328699111938477,
       "species": "Phocarctos hookeri",
       "url": "https://www.inaturalist.org/observations/340892556"
-    },
-    {
-      "photo_id": 315754285,
-      "true": "true_seal",
-      "pred": "eared_seal",
-      "confidence": 0.9420937299728394,
-      "species": "Pagophilus groenlandicus",
-      "url": "https://www.inaturalist.org/observations/181192840"
-    },
-    {
-      "photo_id": 106814992,
-      "true": "walrus",
-      "pred": "true_seal",
-      "confidence": 0.9363439679145813,
-      "species": "Odobenus rosmarus",
-      "url": "https://www.inaturalist.org/observations/66281527"
-    },
-    {
-      "photo_id": 331329269,
-      "true": "true_seal",
-      "pred": "eared_seal",
-      "confidence": 0.9359237551689148,
-      "species": "Mirounga angustirostris",
-      "url": "https://www.inaturalist.org/observations/189181155"
-    },
-    {
-      "photo_id": 331329250,
-      "true": "true_seal",
-      "pred": "eared_seal",
-      "confidence": 0.9301080107688904,
-      "species": "Mirounga angustirostris",
-      "url": "https://www.inaturalist.org/observations/189181155"
-    },
-    {
-      "photo_id": 617610389,
-      "true": "not_pinniped",
-      "pred": "eared_seal",
-      "confidence": 0.929768979549408,
-      "species": "Trichechus manatus",
-      "url": "https://www.inaturalist.org/observations/339499852"
-    },
-    {
-      "photo_id": 304550927,
-      "true": "true_seal",
-      "pred": "not_pinniped",
-      "confidence": 0.9219185709953308,
-      "species": "Pusa saimensis",
-      "url": "https://www.inaturalist.org/observations/175225236"
     },
     {
       "photo_id": 628181517,
       "true": "true_seal",
       "pred": "eared_seal",
-      "confidence": 0.9205948114395142,
+      "confidence": 0.9315398931503296,
       "species": "Mirounga leonina",
       "url": "https://www.inaturalist.org/observations/344748648"
     },
@@ -249,81 +194,137 @@
       "photo_id": 5715024,
       "true": "true_seal",
       "pred": "eared_seal",
-      "confidence": 0.9199105501174927,
+      "confidence": 0.9303690195083618,
       "species": "Neomonachus schauinslandi",
       "url": "https://www.inaturalist.org/observations/4727050"
-    },
-    {
-      "photo_id": 551140133,
-      "true": "walrus",
-      "pred": "eared_seal",
-      "confidence": 0.914077877998352,
-      "species": "Odobenus rosmarus divergens",
-      "url": "https://www.inaturalist.org/observations/305660463"
     },
     {
       "photo_id": 471291218,
       "true": "true_seal",
       "pred": "not_pinniped",
-      "confidence": 0.9139196276664734,
+      "confidence": 0.928993284702301,
       "species": "Lobodon carcinophaga",
       "url": "https://www.inaturalist.org/observations/262337540"
+    },
+    {
+      "photo_id": 331329250,
+      "true": "true_seal",
+      "pred": "eared_seal",
+      "confidence": 0.9243864417076111,
+      "species": "Mirounga angustirostris",
+      "url": "https://www.inaturalist.org/observations/189181155"
+    },
+    {
+      "photo_id": 729564232,
+      "true": "true_seal",
+      "pred": "eared_seal",
+      "confidence": 0.9228055477142334,
+      "species": "Phoca vitulina",
+      "url": "https://www.inaturalist.org/observations/397755937"
+    },
+    {
+      "photo_id": 594455213,
+      "true": "true_seal",
+      "pred": "eared_seal",
+      "confidence": 0.9214147925376892,
+      "species": "Mirounga leonina",
+      "url": "https://www.inaturalist.org/observations/328093141"
+    },
+    {
+      "photo_id": 551140133,
+      "true": "walrus",
+      "pred": "eared_seal",
+      "confidence": 0.920823872089386,
+      "species": "Odobenus rosmarus divergens",
+      "url": "https://www.inaturalist.org/observations/305660463"
     },
     {
       "photo_id": 186967568,
       "true": "not_pinniped",
       "pred": "true_seal",
-      "confidence": 0.9040194749832153,
+      "confidence": 0.913367748260498,
       "species": "Trichechus manatus manatus",
       "url": "https://www.inaturalist.org/observations/110798971"
-    },
-    {
-      "photo_id": 661935902,
-      "true": "eared_seal",
-      "pred": "not_pinniped",
-      "confidence": 0.9018484354019165,
-      "species": "Arctocephalus pusillus",
-      "url": "https://www.inaturalist.org/observations/362660450"
-    },
-    {
-      "photo_id": 298408285,
-      "true": "true_seal",
-      "pred": "not_pinniped",
-      "confidence": 0.9001511931419373,
-      "species": "Pagophilus groenlandicus",
-      "url": "https://www.inaturalist.org/observations/171936355"
-    },
-    {
-      "photo_id": 149298123,
-      "true": "not_pinniped",
-      "pred": "true_seal",
-      "confidence": 0.8980175256729126,
-      "species": "Chelonia mydas",
-      "url": "https://www.inaturalist.org/observations/90341303"
     },
     {
       "photo_id": 108003919,
       "true": "eared_seal",
       "pred": "not_pinniped",
-      "confidence": 0.8972207903862,
+      "confidence": 0.9109222888946533,
       "species": "Zalophus wollebaeki",
       "url": "https://www.inaturalist.org/observations/66925644"
     },
     {
-      "photo_id": 196606930,
-      "true": "walrus",
+      "photo_id": 331329269,
+      "true": "true_seal",
       "pred": "eared_seal",
-      "confidence": 0.8908082842826843,
-      "species": "Odobenus rosmarus rosmarus",
-      "url": "https://www.inaturalist.org/observations/116470692"
+      "confidence": 0.9096598029136658,
+      "species": "Mirounga angustirostris",
+      "url": "https://www.inaturalist.org/observations/189181155"
+    },
+    {
+      "photo_id": 417851764,
+      "true": "not_pinniped",
+      "pred": "eared_seal",
+      "confidence": 0.9015839695930481,
+      "species": "Lontra canadensis",
+      "url": "https://www.inaturalist.org/observations/234994335"
+    },
+    {
+      "photo_id": 106814992,
+      "true": "walrus",
+      "pred": "true_seal",
+      "confidence": 0.8980966210365295,
+      "species": "Odobenus rosmarus",
+      "url": "https://www.inaturalist.org/observations/66281527"
+    },
+    {
+      "photo_id": 267898635,
+      "true": "eared_seal",
+      "pred": "walrus",
+      "confidence": 0.8946942687034607,
+      "species": "Eumetopias jubatus",
+      "url": "https://www.inaturalist.org/observations/155012486"
     },
     {
       "photo_id": 668812422,
       "true": "not_pinniped",
       "pred": "true_seal",
-      "confidence": 0.8866929411888123,
+      "confidence": 0.8885775804519653,
       "species": "Lutra lutra",
       "url": "https://www.inaturalist.org/observations/366281825"
+    },
+    {
+      "photo_id": 210422340,
+      "true": "true_seal",
+      "pred": "eared_seal",
+      "confidence": 0.8871134519577026,
+      "species": "Pagophilus groenlandicus",
+      "url": "https://www.inaturalist.org/observations/124162958"
+    },
+    {
+      "photo_id": 304550927,
+      "true": "true_seal",
+      "pred": "not_pinniped",
+      "confidence": 0.8818419575691223,
+      "species": "Pusa saimensis",
+      "url": "https://www.inaturalist.org/observations/175225236"
+    },
+    {
+      "photo_id": 149298123,
+      "true": "not_pinniped",
+      "pred": "true_seal",
+      "confidence": 0.879244863986969,
+      "species": "Chelonia mydas",
+      "url": "https://www.inaturalist.org/observations/90341303"
+    },
+    {
+      "photo_id": 250755247,
+      "true": "eared_seal",
+      "pred": "not_pinniped",
+      "confidence": 0.8745529055595398,
+      "species": "Arctocephalus gazella",
+      "url": "https://www.inaturalist.org/observations/145921634"
     }
   ]
 }

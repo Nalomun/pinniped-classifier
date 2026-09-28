@@ -41,10 +41,14 @@ def main():
     rows = (test_df.sort_values("photo_id").groupby("class", sort=True).head(args.per_class)).to_dict("records")
 
     model, ck = load_checkpoint(Path(args.checkpoint), "cpu")
-    tf = eval_transform(ck["mean"], ck["std"], ck.get("img_size", 224))
+    meta = json.loads((EXPORT_DIR / "model_meta.json").read_text())
+    img_size = meta["crop_size"]  # the exported model's spec, which may be above the training size
+    tf = eval_transform(meta["mean"], meta["std"], img_size)
+    print(f"parity at {img_size}px (trained at {ck.get('img_size', 224)}), mean={meta['mean']} std={meta['std']}")
     sessions = {"onnx_fp32": ort.InferenceSession(str(EXPORT_DIR / "pinniped.onnx"), providers=["CPUExecutionProvider"])}
-    if (EXPORT_DIR / "pinniped_int8.onnx").exists():
-        sessions["onnx_int8"] = ort.InferenceSession(str(EXPORT_DIR / "pinniped_int8.onnx"), providers=["CPUExecutionProvider"])
+    for tag, fname in (("onnx_w8", "pinniped_w8.onnx"), ("onnx_int8", "pinniped_int8.onnx")):
+        if (EXPORT_DIR / fname).exists():
+            sessions[tag] = ort.InferenceSession(str(EXPORT_DIR / fname), providers=["CPUExecutionProvider"])
 
     out, worst = [], {k: 0.0 for k in sessions}
     for r in rows:
@@ -69,7 +73,8 @@ def main():
         print(f"{dst.name:34s} true={r['class']:12s} torch={rec['pred']:12s} p={p_torch.max():.3f} "
               + " ".join(f"{k}Δ={rec[f'{k}_max_abs_diff']:.2e}" for k in sessions))
 
-    summary = {"n_images": len(out), "classes": CLASSES, "max_abs_prob_diff": worst,
+    summary = {"n_images": len(out), "classes": CLASSES, "img_size": img_size, "mean": meta["mean"], "std": meta["std"],
+               "max_abs_prob_diff": worst,
                "argmax_agreement": {k: all(o[f"{k}_argmax_match"] for o in out) for k in sessions},
                "fp32_parity_pass": worst["onnx_fp32"] <= args.atol, "atol": args.atol, "images": out}
     (REPORTS_DIR / "parity.json").write_text(json.dumps(summary, indent=2))
