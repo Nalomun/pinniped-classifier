@@ -137,7 +137,22 @@ def main():
     int8_path = EXPORT_DIR / "pinniped_int8.onnx"
     if not args.skip_quant:
         calib_df = val_df.sample(n=min(args.calib_images, len(val_df)), random_state=0)
-        quantize(fp32_path, int8_path, calib_df, mean, std)
+        # pick the calibration method on VAL, then report the winner on TEST
+        val_scores = {}
+        for method in ["percentile", "entropy", "minmax"]:
+            cand = int8_path.with_name(f"pinniped_int8_{method}.onnx")
+            quantize(fp32_path, cand, calib_df, mean, std, method)
+            vm = compute_metrics(onnx_probs(cand, val_df, mean, std), val_df)
+            val_scores[method] = vm["pinniped_acc_strict"]
+            print(f"[quant:{method}] val pinniped acc={vm['pinniped_acc_strict']:.4f} acc={vm['accuracy_4way']:.4f}")
+        best_method = max(val_scores, key=val_scores.get)
+        for method in val_scores:
+            cand = int8_path.with_name(f"pinniped_int8_{method}.onnx")
+            if method == best_method:
+                cand.replace(int8_path)
+            else:
+                cand.unlink(missing_ok=True)
+        print(f"[quant] best calibration on val: {best_method}")
         int8_m = compute_metrics(onnx_probs(int8_path, test_df, mean, std), test_df, threshold)
         drop_acc = 100 * (fp32_m["accuracy_4way"] - int8_m["accuracy_4way"])
         drop_pin = 100 * (fp32_m["pinniped_acc_strict"] - int8_m["pinniped_acc_strict"])
@@ -147,7 +162,8 @@ def main():
         results["int8"] = {"file": int8_path.name, "size_mb": round(int8_path.stat().st_size / 1e6, 2), "sha256": sha256(int8_path),
                            "test_accuracy_4way": int8_m["accuracy_4way"], "test_pinniped_acc_strict": int8_m["pinniped_acc_strict"],
                            "test_fur_seal_acc": int8_m["fur_seal_acc"], "drop_accuracy_points": round(drop_acc, 3),
-                           "drop_pinniped_points": round(drop_pin, 3), "kept": keep}
+                           "drop_pinniped_points": round(drop_pin, 3), "kept": keep, "calibration": best_method,
+                           "val_pinniped_acc_by_calibration": val_scores}
         if keep:
             recommended = "int8"
         else:

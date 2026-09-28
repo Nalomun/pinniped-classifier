@@ -17,8 +17,13 @@ Sampling policy (see common.py for budgets):
   * Otariidae gets two separate budgets (fur seals vs sea lions) so the fur-seal case the
     app exists for is well represented.
   * Negatives: fixed per-taxon budgets weighted toward lookalikes.
+  * Observations the community annotated as dead / track / scat / bone / feather / egg are
+    skipped (EXCLUDED_ANNOTATIONS in common.py), and photos whose "medium" file is smaller
+    than MIN_IMAGE_SIDE px (thumbnails of deleted originals) are dropped.
   * Observations with more photos than allowed keep only the first N photos. The split is
     done per observation later (scripts/split.py) so sibling photos never leak across splits.
+  * A second pass, scripts/filter.py, then removes photos where no animal is actually
+    visible (distant specks, empty water, aerial shots) using CLIP zero-shot scores.
 
 Usage:
   python scripts/download.py                      # fresh build
@@ -46,9 +51,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (  # noqa: E402
     ALLOWED_LICENSES,
     DATA_DIR,
+    EXCLUDED_ANNOTATIONS,
     FUR_SEAL_GENERA,
     IMAGES_DIR,
     MANIFEST_CSV,
+    MIN_IMAGE_SIDE,
     NEGATIVE_PHOTOS_PER_OBS,
     NEGATIVE_TAXA,
     PINNIPED_TAXA,
@@ -175,8 +182,16 @@ def medium_url(url: str) -> str:
     return re.sub(r"/square\.(\w+)$", r"/medium.\1", url)
 
 
+def excluded_by_annotation(o: dict) -> bool:
+    """True if the community annotated this observation as dead / track / scat / bone / etc."""
+    ann = {(a.get("controlled_attribute_id"), a.get("controlled_value_id")) for a in o.get("annotations", [])}
+    return bool(ann & EXCLUDED_ANNOTATIONS)
+
+
 def rows_from_obs(o: dict, cls: str, subgroup: str, query_taxon: str, photos_per_obs: int) -> list[dict]:
     rows = []
+    if excluded_by_annotation(o):
+        return rows
     taxon = o.get("taxon") or {}
     user = o.get("user") or {}
     kept = 0
@@ -184,8 +199,8 @@ def rows_from_obs(o: dict, cls: str, subgroup: str, query_taxon: str, photos_per
         lic = (p.get("license_code") or "").lower()
         if lic not in ALLOWED_LICENSES or p.get("hidden"):
             continue
-        ext = medium_url(p["url"]).rsplit(".", 1)[-1].lower()
-        ext = "jpg" if ext in ("jpg", "jpeg") else ext
+        ext = medium_url(p["url"]).rsplit("/", 1)[-1].rsplit(".", 1)[-1].lower() if "." in medium_url(p["url"]).rsplit("/", 1)[-1] else "jpg"
+        ext = "jpg" if ext in ("jpg", "jpeg", "") else ext
         rows.append(
             {
                 "photo_id": p["id"],
@@ -240,7 +255,8 @@ def build_manifest(seed: int) -> pd.DataFrame:
                 continue
             obs = fetch_observations(s["taxon_id"], n, rng)
             new = [r for o in obs for r in rows_from_obs(o, cls, sg, s["name"], cfg["photos_per_obs"])]
-            print(f"  {s['name']:32s} ({s['common_name']}): {len(obs):4d} obs -> {len(new):4d} photos")
+            skipped = sum(excluded_by_annotation(o) for o in obs)
+            print(f"  {s['name']:32s} ({s['common_name']}): {len(obs):4d} obs ({skipped} excluded by annotation) -> {len(new):4d} photos")
             rows += new
 
     # ---- negatives ----------------------------------------------------------
@@ -248,7 +264,8 @@ def build_manifest(seed: int) -> pd.DataFrame:
         t = resolve_taxon(name, rank)
         obs = fetch_observations(t["id"], n, rng)
         new = [r for o in obs for r in rows_from_obs(o, "not_pinniped", bucket, name, NEGATIVE_PHOTOS_PER_OBS)]
-        print(f"  {name:32s}: {len(obs):4d} obs -> {len(new):4d} photos")
+        skipped = sum(excluded_by_annotation(o) for o in obs)
+        print(f"  {name:32s}: {len(obs):4d} obs ({skipped} excluded by annotation) -> {len(new):4d} photos")
         rows += new
 
     df = pd.DataFrame(rows).drop_duplicates("photo_id").reset_index(drop=True)
@@ -263,6 +280,8 @@ def download_one(row: dict) -> tuple[int, int | None, int | None, str | None]:
     if dest.exists() and dest.stat().st_size > 0:
         try:
             with Image.open(dest) as im:
+                if min(im.size) < MIN_IMAGE_SIDE:
+                    return row["photo_id"], im.width, im.height, "too_small"
                 return row["photo_id"], im.width, im.height, None
         except Exception:
             dest.unlink(missing_ok=True)
@@ -276,6 +295,8 @@ def download_one(row: dict) -> tuple[int, int | None, int | None, str | None]:
             im = Image.open(io.BytesIO(r.content))
             im.load()
             w, h = im.size
+            if min(w, h) < MIN_IMAGE_SIDE:
+                return row["photo_id"], w, h, "too_small"
             dest.write_bytes(r.content)
             return row["photo_id"], w, h, None
         except Exception as e:  # noqa: BLE001
