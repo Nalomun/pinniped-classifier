@@ -58,8 +58,8 @@ def load_checkpoint(path: Path, device: str):
 
 
 @torch.no_grad()
-def predict_probs(model, df: pd.DataFrame, device: str, batch_size: int = 128, workers: int = 6) -> np.ndarray:
-    ds = ManifestDataset(df, eval_transform())
+def predict_probs(model, df: pd.DataFrame, device: str, mean, std, batch_size: int = 128, workers: int = 4) -> np.ndarray:
+    ds = ManifestDataset(df, eval_transform(mean, std))
     loader = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=workers)
     out = []
     for x, _ in loader:
@@ -221,7 +221,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", default=str(OUTPUTS_DIR / "best.pt"))
     ap.add_argument("--device", default="auto")
-    ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
     device = get_device(args.device)
@@ -230,8 +230,8 @@ def main():
     print(f"loaded {args.checkpoint} ({ck['model']}, best val epoch {ck.get('val')})")
 
     val_df, test_df = load_manifest("val"), load_manifest("test")
-    val_probs = predict_probs(model, val_df, device, workers=args.workers)
-    test_probs = predict_probs(model, test_df, device, workers=args.workers)
+    val_probs = predict_probs(model, val_df, device, ck["mean"], ck["std"], workers=args.workers)
+    test_probs = predict_probs(model, test_df, device, ck["mean"], ck["std"], workers=args.workers)
     np.savez(OUTPUTS_DIR / "probs.npz", val=val_probs, test=test_probs)
 
     threshold, sweep = tune_threshold(val_probs, val_df["class"].map(CLASSES.index).to_numpy())

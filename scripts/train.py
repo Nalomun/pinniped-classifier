@@ -17,7 +17,7 @@ Recipe: AdamW, cosine LR with warmup, label smoothing, mixed precision on CUDA.
 Whole network is fine-tuned (not just the head) with a lower LR on the backbone.
 The best checkpoint by validation *pinniped* accuracy is kept.
 
-Runs on Colab GPU in a few minutes; on an 8-core laptop CPU expect ~4-5 min/epoch.
+Runs on Colab GPU in a few minutes; on an 8-core laptop CPU expect ~3-4 min/epoch.
 """
 from __future__ import annotations
 
@@ -52,9 +52,22 @@ MODEL_TAGS = {
 }
 
 
+def model_norm(name: str) -> tuple[list[float], list[float]]:
+    """Input mean/std the pretrained weights were trained with (differs per weight set!)."""
+    cfg = timm.get_pretrained_cfg(MODEL_TAGS.get(name, name))
+    return [float(v) for v in cfg.mean], [float(v) for v in cfg.std]
+
+
 def build_model(name: str, pretrained: bool = True) -> nn.Module:
     tag = MODEL_TAGS.get(name, name)
-    return timm.create_model(tag, pretrained=pretrained, num_classes=len(CLASSES))
+    model = timm.create_model(tag, pretrained=pretrained, num_classes=len(CLASSES))
+    # timm initialises a fresh Linear head with uniform(+-1/sqrt(fan_out)); with fan_out=4 that is
+    # +-0.5 and the untrained model emits logits of +-20, which blasts the pretrained backbone with
+    # huge gradients in the first epoch. Start the head near zero instead.
+    head = model.get_classifier()
+    nn.init.trunc_normal_(head.weight, std=0.01)
+    nn.init.zeros_(head.bias)
+    return model
 
 
 @torch.no_grad()
@@ -88,7 +101,7 @@ def main():
     ap.add_argument("--weight-decay", type=float, default=0.02)
     ap.add_argument("--label-smoothing", type=float, default=0.1)
     ap.add_argument("--warmup-epochs", type=float, default=1.0)
-    ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--workers", type=int, default=2, help="2 is plenty on CPU (decode is ~20x faster than the model); more just fights torch for cores")
     ap.add_argument("--device", default="auto")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--limit", type=int, default=0, help="debug: use only N training images")
@@ -110,8 +123,10 @@ def main():
     print(f"train={len(train_df)} val={len(val_df)}")
     print("train class counts:", train_df["class"].value_counts().to_dict())
 
-    train_ds = ManifestDataset(train_df, train_transform())
-    val_ds = ManifestDataset(val_df, eval_transform())
+    mean, std = model_norm(args.model)
+    print(f"input normalisation from pretrained cfg: mean={mean} std={std}")
+    train_ds = ManifestDataset(train_df, train_transform(mean, std))
+    val_ds = ManifestDataset(val_df, eval_transform(mean, std))
     pin = device == "cuda"
     train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=args.workers,
                               pin_memory=pin, drop_last=True, persistent_workers=args.workers > 0)
@@ -170,7 +185,7 @@ def main():
         # Model selection on pinniped accuracy (the ship bar), ties broken by overall acc.
         if (val["pinniped_acc"], val["acc"]) > (best["pinniped_acc"], best["acc"]):
             best = {**val, "epoch": epoch + 1}
-            torch.save({"model": args.model, "tag": MODEL_TAGS[args.model], "classes": CLASSES, "state_dict": model.state_dict(), "args": vars(args), "val": val},
+            torch.save({"model": args.model, "tag": MODEL_TAGS[args.model], "classes": CLASSES, "mean": mean, "std": std, "state_dict": model.state_dict(), "args": vars(args), "val": val},
                        out_dir / "best.pt")
             print(f"  saved best (val pinniped_acc={val['pinniped_acc']:.4f}, acc={val['acc']:.4f})")
 

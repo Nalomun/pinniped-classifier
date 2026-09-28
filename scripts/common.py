@@ -1,6 +1,6 @@
 """Shared definitions: class order, taxa configuration, preprocessing spec, dataset.
 
-Everything the browser needs to reproduce preprocessing lives in PREPROCESS and is
+Everything the browser needs to reproduce preprocessing lives in preprocess_spec() and is
 written verbatim into export/model_meta.json by scripts/export.py.
 """
 from __future__ import annotations
@@ -78,18 +78,25 @@ ALLOWED_LICENSES = {"cc0", "cc-by"}
 # ---------------------------------------------------------------------------
 IMG_SIZE = 224
 RESIZE_SHORTER = 256
+# Default normalisation. NOTE: the mean/std actually used are taken from the pretrained
+# weights' config at training time and stored in the checkpoint / model_meta.json, because
+# they differ between weight sets (e.g. timm's *.miil_in21k_ft_in1k weights expect raw [0,1]
+# inputs: mean 0, std 1; the *.ra_in1k weights expect ImageNet mean/std).
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
-PREPROCESS = {
-    "color_space": "RGB",
-    "steps": [
-        {"op": "resize_shorter_side", "size": RESIZE_SHORTER, "interpolation": "bilinear"},
-        {"op": "center_crop", "size": IMG_SIZE},
-        {"op": "to_float", "scale": "divide_by_255"},
-        {"op": "normalize", "mean": IMAGENET_MEAN, "std": IMAGENET_STD},
-        {"op": "layout", "value": "NCHW"},
-    ],
-}
+
+
+def preprocess_spec(mean, std) -> dict:
+    return {
+        "color_space": "RGB",
+        "steps": [
+            {"op": "resize_shorter_side", "size": RESIZE_SHORTER, "interpolation": "bilinear"},
+            {"op": "center_crop", "size": IMG_SIZE},
+            {"op": "to_float", "scale": "divide_by_255"},
+            {"op": "normalize", "mean": list(mean), "std": list(std)},
+            {"op": "layout", "value": "NCHW"},
+        ],
+    }
 
 
 def seed_everything(seed: int) -> None:
@@ -113,8 +120,8 @@ def get_device(requested: str = "auto") -> str:
     return "cpu"
 
 
-def eval_transform():
-    """Deterministic transform used for val/test/export/parity. Must match PREPROCESS."""
+def eval_transform(mean=IMAGENET_MEAN, std=IMAGENET_STD):
+    """Deterministic transform used for val/test/export/parity. Must match preprocess_spec()."""
     from torchvision import transforms as T
 
     return T.Compose(
@@ -122,12 +129,12 @@ def eval_transform():
             T.Resize(RESIZE_SHORTER, interpolation=T.InterpolationMode.BILINEAR),
             T.CenterCrop(IMG_SIZE),
             T.ToTensor(),
-            T.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+            T.Normalize(list(mean), list(std)),
         ]
     )
 
 
-def train_transform():
+def train_transform(mean=IMAGENET_MEAN, std=IMAGENET_STD):
     """Augmentation for training. Backgrounds (water/sand/ice/rock) and lighting
     vary a lot across iNat photos, so we crop aggressively and jitter colour."""
     from torchvision import transforms as T
@@ -138,7 +145,7 @@ def train_transform():
             T.RandomHorizontalFlip(),
             T.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.03),
             T.ToTensor(),
-            T.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+            T.Normalize(list(mean), list(std)),
             T.RandomErasing(p=0.15, scale=(0.02, 0.12)),
         ]
     )
