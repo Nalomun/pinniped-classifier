@@ -101,10 +101,10 @@ def main():
     ap.add_argument("--weight-decay", type=float, default=0.02)
     ap.add_argument("--label-smoothing", type=float, default=0.1)
     ap.add_argument("--warmup-epochs", type=float, default=1.0)
-    ap.add_argument("--balance", type=float, default=0.0,
+    ap.add_argument("--balance", type=float, default=0.5,
                     help="class-balanced sampling: sample weight = count^-balance (0 = off, 0.5 = square-root balancing, 1 = fully balanced). "
                          "Walrus has ~10x fewer photos than the other classes and its recall collapses without this.")
-    ap.add_argument("--img-size", type=int, default=224, help="input resolution; 224 is standard, 288 helps small/distant animals at ~1.65x compute")
+    ap.add_argument("--img-size", type=int, default=288, help="input resolution; 224 is standard, 288 (+2.2 pts here) helps small/distant animals at ~1.65x compute")
     ap.add_argument("--workers", type=int, default=2, help="2 is plenty on CPU (decode is ~20x faster than the model); more just fights torch for cores")
     ap.add_argument("--device", default="auto")
     ap.add_argument("--seed", type=int, default=42)
