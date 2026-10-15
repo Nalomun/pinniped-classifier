@@ -111,9 +111,8 @@ its features were worse (76 % vs 78 %). Also learned that Firefox on this laptop
 of RAM and the swap was full, which is why one training run was crawling at 87 seconds per
 step until I halved the batch size.
 
-**Handoff.** Phase 2 (the actual `/seal` page) went to a separate Claude Code session with a
-handoff doc that spells out the exact preprocessing spec and a browser parity check against
-12 committed sample images. It's live.
+**Phase 2.** The actual `/seal` page was built in a separate session, using the same
+preprocessing spec and a browser parity check against 12 committed sample images. It's live.
 
 ## 2026-09-28 — Evening: free accuracy, and a way to fit a bigger model
 
@@ -148,7 +147,7 @@ wasting the int8 range on single outlier weights. Keeping every tensor under 20k
 fp32 (0.9 MB total) and picking each channel's scale with a small MSE search over clipping
 ratios brought the drop to exactly 0.00 at 5.0 MB. That's the one shipping: 89.7 %, 5 MB.
 
-**Decision.** Ship 352 px + weight-only int8 now (small change, site session swaps the model
+**Decision.** Ship 352 px + weight-only int8 now (small change, the site page swaps in the new model
 and re-runs its parity check). Then, as a separate experiment on Colab, try a bigger
 backbone (EfficientNet-B2 or ConvNeXt-nano) at 288 px shipped as weight-only int8. My guess is
 91–93 %, at the cost of roughly 1 s per photo on a phone instead of ~200 ms. Whether that

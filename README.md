@@ -6,6 +6,9 @@ those. It runs entirely in the browser: the photo never leaves your device.
 
 **Live page:** <https://quinnlambert.com/seal> · **Training code:** this repo
 
+I made the design and data decisions and checked the results; the code was written with
+Claude Code (see [docs/devlog.md](docs/devlog.md)).
+
 **Result:** 89.7 % pinniped test accuracy (fur seals 92.5 %), 93.5 % on the photos it is
 confident about, from a 5 MB ONNX model. The 95 % target was not reached; see
 [Results](#results) and [Limitations](#known-limitations-and-failure-examples).
